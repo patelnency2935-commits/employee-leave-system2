@@ -1,0 +1,107 @@
+/* Page Background */
+.admin-leave-container {
+  min-height: 100vh;
+  background-color: #f4f6f9;
+  padding: 40px 20px;
+}
+
+/* Heading */
+.admin-leave-container h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Leave Card */
+.leave-card {
+  background: #ffffff;
+  max-width: 850px;
+  margin: 20px auto;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  transition: 0.3s ease;
+}
+
+.leave-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Leave Info Layout */
+.leave-card p {
+  margin: 8px 0;
+  font-size: 15px;
+  color: #444;
+}
+
+/* Status Badge */
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+/* Status Colors */
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.approved {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Button Group */
+.btn-group {
+  margin-top: 15px;
+  display: flex;
+  gap: 15px;
+}
+
+/* Buttons */
+.btn-group button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+
+/* Approve Button */
+.btn-group button:first-child {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-group button:first-child:hover {
+  background-color: #218838;
+}
+
+/* Reject Button */
+.btn-group button:last-child {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-group button:last-child:hover {
+  background-color: #c82333;
+}
+
+/* No Leave Text */
+.admin-leave-container p {
+  text-align: center;
+  color: #777;
+  font-size: 16px;
+}
