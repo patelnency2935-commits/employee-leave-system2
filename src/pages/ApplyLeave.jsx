@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "./ApplyLeave.css";
 
 export default function ApplyLeave() {
-  const navigate = useNavigate();
 
   const [leaveType, setLeaveType] = useState("");
   const [from, setFrom] = useState("");
@@ -20,6 +18,11 @@ export default function ApplyLeave() {
     const startDate = new Date(from);
     const endDate = new Date(to);
     const today = new Date();
+
+    if (endDate < startDate) {
+      alert("End date cannot be before start date.");
+      return;
+    }
 
     const diffTime = endDate - startDate;
     const totalDays = diffTime / (1000 * 60 * 60 * 24) + 1;
@@ -40,6 +43,7 @@ export default function ApplyLeave() {
       return;
     }
 
+    // ===== Get existing leaves =====
     const storedLeaves = JSON.parse(localStorage.getItem("leaves") || "[]");
 
     const newLeave = {
@@ -48,20 +52,33 @@ export default function ApplyLeave() {
       to,
       type: leaveType,
       reason,
+      totalDays,
       status: "Pending",
+      appliedDate: new Date().toISOString(),
       medicalDocument: documentPreview || null,
     };
 
     const updatedLeaves = [...storedLeaves, newLeave];
 
     localStorage.setItem("leaves", JSON.stringify(updatedLeaves));
-    window.dispatchEvent(new Event("storage"));
 
-    // IMPORTANT LINE ADDED
-    localStorage.setItem("lastEmployeePage", "/apply-leave");
+    // ===== Update Leave Balance =====
+    const currentBalance = parseInt(
+      localStorage.getItem("leaveBalance") || "12"
+    );
+
+    const newBalance = currentBalance - totalDays;
+
+    localStorage.setItem("leaveBalance", newBalance);
 
     alert("Leave applied successfully!");
-    navigate("/leave-status");
+
+    // ✅ Reset form after submit
+    setLeaveType("");
+    setFrom("");
+    setTo("");
+    setReason("");
+    setDocumentPreview("");
   };
 
   return (
@@ -110,9 +127,7 @@ export default function ApplyLeave() {
 
       {leaveType === "Sick Leave" && (
         <div className="form-group">
-          <label>
-            Upload Medical Certificate (Required if &gt; 2 days)
-          </label>
+          <label>Upload Medical Certificate (Required if &gt; 2 days)</label>
           <input
             type="file"
             accept="image/*,.pdf"

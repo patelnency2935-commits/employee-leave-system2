@@ -1,64 +1,49 @@
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 
 export default function EmployeeLogin() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem("employeeLoggedIn");
-
-    if (isLoggedIn) {
-      // ✅ ADDED: redirect to last visited page
-      const lastPage =
-        localStorage.getItem("lastEmployeePage") || "/dashboard";
-
-      navigate(lastPage, { replace: true });
-    }
-  }, [navigate]);
-
-  const [empId, setEmpId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    if (empId && password) {
-      localStorage.setItem("isLoggedIn", "true");
+  const handleLogin = (e) => {
+    e.preventDefault();
+
+    if (email && password) {
       localStorage.setItem("role", "employee");
-      localStorage.setItem("employeeLoggedIn", "true");
-
-      // ✅ ADDED: redirect to last visited page
-      const lastPage =
-        localStorage.getItem("lastEmployeePage") || "/dashboard";
-
-      navigate(lastPage);
+      navigate("/employee-dashboard");
     } else {
-      alert("Please enter Employee ID and Password");
+      alert("Enter email and password");
     }
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h2 style={styles.heading}>Employee Login</h2>
+        <h2 style={styles.title}>Employee Login</h2>
 
-        <input
-          type="text"
-          placeholder="Employee ID"
-          value={empId}
-          onChange={(e) => setEmpId(e.target.value)}
-          style={styles.input}
-        />
+        <form onSubmit={handleLogin} style={{ width: "100%" }}>
+          <input
+            type="email"
+            placeholder="Enter Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={styles.input}
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-        />
+          <input
+            type="password"
+            placeholder="Enter Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={styles.input}
+          />
 
-        <button onClick={handleLogin} style={styles.button}>
-          Login
-        </button>
+          <button type="submit" style={styles.button}>
+            Login
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -70,38 +55,36 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "linear-gradient(to right, #dbeafe, #93c5fd)",
+    background: "linear-gradient(135deg, rgb(147, 197, 253))",
   },
   card: {
-    background: "#ffffff",
-    padding: "40px 35px",
-    width: "350px",
+    background: "white",
+    padding: "40px",
     borderRadius: "12px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+    width: "350px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
     textAlign: "center",
   },
-  heading: {
+  title: {
     marginBottom: "25px",
-    color: "#1e3a8a",
+    color: "#1e293b",
   },
   input: {
     width: "100%",
-    padding: "10px",
+    padding: "12px",
     marginBottom: "15px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "14px",
+    borderRadius: "8px",
+    border: "1px solid #cbd5e1",
     outline: "none",
   },
   button: {
     width: "100%",
-    padding: "10px",
+    padding: "12px",
     backgroundColor: "#2563eb",
     color: "white",
     border: "none",
-    borderRadius: "6px",
-    fontSize: "15px",
+    borderRadius: "8px",
+    fontWeight: "bold",
     cursor: "pointer",
-    transition: "0.3s",
   },
 };

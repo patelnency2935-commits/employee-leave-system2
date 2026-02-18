@@ -1,4 +1,4 @@
-/* Page Container */
+
 .leave-container {
   min-height: 100vh;
   padding: 50px 20px;
@@ -6,14 +6,14 @@
   text-align: center;
 }
 
-/* Heading */
+
 .leave-container h2 {
   margin-bottom: 35px;
   color: #1e3a8a;
   font-size: 26px;
 }
 
-/* Leave Card */
+
 .leave-card {
   max-width: 650px;
   margin: 0 auto;
@@ -24,7 +24,7 @@
   text-align: left;
 }
 
-/* Leave Type */
+
 .leave-type {
   font-size: 20px;
   font-weight: 600;
@@ -32,7 +32,7 @@
   margin-bottom: 20px;
 }
 
-/* Details Section */
+
 .leave-details {
   display: flex;
   justify-content: space-between;
@@ -40,7 +40,7 @@
   margin-bottom: 25px;
 }
 
-/* Each Detail Block */
+
 .leave-details div {
   flex: 1;
 }
@@ -58,7 +58,7 @@
   font-size: 15px;
 }
 
-/* Status Badge (Bottom Right) */
+
 .leave-status {
   display: inline-block;
   padding: 6px 16px;
@@ -68,7 +68,7 @@
   float: right;
 }
 
-/* Status Colors */
+
 .pending {
   background: #facc15;
   color: #000;

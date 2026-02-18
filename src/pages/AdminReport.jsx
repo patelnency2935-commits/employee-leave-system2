@@ -46,7 +46,7 @@ export default function AdminReport() {
     setLeaveTypeData(formattedTypeData);
     setStatusData(formattedStatusData);
 
-    // Summary Calculation
+    
     const total = leaves.length;
     const approved = statusCounts["Approved"] || 0;
     const pending = statusCounts["Pending"] || 0;
@@ -84,7 +84,7 @@ export default function AdminReport() {
         Admin Analytics Dashboard
       </h2>
 
-      {/* Summary Cards */}
+      
       <div style={{
         display: "flex",
         gap: "20px",
@@ -121,7 +121,7 @@ export default function AdminReport() {
         justifyContent: "center"
       }}>
 
-        {/* Pie Chart */}
+       
         <div style={{
           background: "white",
           padding: "20px",
@@ -149,7 +149,7 @@ export default function AdminReport() {
           </PieChart>
         </div>
 
-        {/* Bar Chart */}
+        
         <div style={{
           background: "white",
           padding: "20px",

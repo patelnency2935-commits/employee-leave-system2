@@ -15,12 +15,16 @@ export default function Dashboard() {
   const approved = leaves.filter(l => l.status === "Approved").length;
   const rejected = leaves.filter(l => l.status === "Rejected").length;
 
-  // ✅ FIXED LOGOUT (Leaves will not delete now)
+  
   const logout = () => {
     localStorage.removeItem("employeeLoggedIn");
-    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("lastEmployeePage");
     localStorage.removeItem("role");
     navigate("/");
+
+    
+    
+    
   };
 
   return (

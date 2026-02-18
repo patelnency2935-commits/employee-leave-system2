@@ -1,73 +1,81 @@
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LandingPage.css";
-import dashboardImg from "../assets/dashboard.png";
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/employee-login", { replace: true });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    role: "employee",
+  });
 
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+
+    if (formData.role === "employee") {
+      localStorage.setItem("role", "employee");
+      navigate("/employee-login");
+    } else {
+      localStorage.setItem("role", "admin");
+      navigate("/admin-login");
+    }
   };
 
   return (
     <div className="landing-container">
-      
-      {/* ===== Navbar ===== */}
-      <div className="navbar">
-        <h1>Employee Leave Management</h1>
-
-        {/* ✅ Logout Button Added (Right Side) */}
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
-        </button>
+      <div className="left-section">
+        <h1>Smart Employee Leave Management</h1>
+        <p>
+          Easily apply for leave, track approvals, and manage employee records
+          with a simple and efficient system.
+        </p>
       </div>
 
-      {/* ===== Hero Section ===== */}
-      <div className="hero">
-        <div className="hero-left">
-          <h2>Smart Employee Leave Management</h2>
-          <p>
-            Easily apply for leave, track approvals, and manage employee records
-            with a simple and efficient system.
-          </p>
+      <div className="right-section">
+        <div className="login-card">
+          <h2>Login</h2>
 
-          <div className="hero-buttons">
-            <button
-              className="employee-btn"
-              onClick={() => navigate("/employee-login")}
+          <form onSubmit={handleLogin}>
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter Email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
             >
-              Employee Login
-            </button>
+              <option value="employee">Employee Login</option>
+              <option value="admin">Admin Login</option>
+            </select>
 
-            <button
-              className="admin-btn"
-              onClick={() => navigate("/admin-login")}
-            >
-              Admin Login
-            </button>
-          </div>
-        </div>
-
-        <div className="hero-right">
-          <div className="mock-card">
-            <div className="mock-line primary"></div>
-            <div className="mock-line"></div>
-            <div className="mock-line"></div>
-            <div className="mock-line small"></div>
-          </div>
+            <button type="submit">Login</button>
+          </form>
         </div>
       </div>
-
-      {/* ===== Screenshot Section (NEW) ===== */}
-      <div className="screenshot-section">
-        <h2>Dashboard Preview</h2>
-        <div className="image-container">
-          <img src={dashboardImg} alt="Dashboard Preview" />
-        </div>
-      </div>
-
     </div>
   );
 }

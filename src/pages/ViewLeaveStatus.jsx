@@ -37,7 +37,7 @@ export default function ViewLeaveStatus() {
             <p><strong>To:</strong> {leave.to}</p>
             <p><strong>Reason:</strong> {leave.reason}</p>
 
-            {/* ✅ Medical Certificate View Added */}
+            
             {leave.document && (
               <p>
                 <strong>Medical Certificate:</strong>{" "}

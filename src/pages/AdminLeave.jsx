@@ -7,7 +7,7 @@ export default function AdminLeave() {
   const [leaves, setLeaves] = useState([]);
   const navigate = useNavigate();
 
-  // ✅ ADMIN PROTECTION
+  
   useEffect(() => {
     const role = localStorage.getItem("role");
     if (role !== "admin") {
@@ -70,7 +70,7 @@ export default function AdminLeave() {
 
             <p><b>Reason:</b> {leave.reason}</p>
 
-            {/* ✅ Medical Certificate Added */}
+            
             {leave.medicalDocument && (
               <p>
                 <b>Medical Certificate:</b>{" "}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";   // ✅ useEffect add kiya
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AdminLogin.css";
 
@@ -7,23 +7,23 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  // ✅ If already logged in, don't open login page
+  // Agar already admin login hai to direct dashboard bhejo
   useEffect(() => {
     const role = localStorage.getItem("role");
     if (role === "admin") {
-      navigate("/admin-leaves");
+      navigate("/admin-dashboard");
     }
   }, [navigate]);
 
   const login = () => {
-    if (username === "" || password === "") {
+    if (!username || !password) {
       alert("Please fill all fields");
       return;
     }
 
     if (username === "admin" && password === "admin123") {
-      localStorage.setItem("role", "admin");   // already present (unchanged)
-      navigate("/admin-leaves");
+      localStorage.setItem("role", "admin");
+      navigate("/admin-dashboard"); // ✅ route fixed
     } else {
       alert("Invalid Admin Credentials");
     }
@@ -49,7 +49,6 @@ export default function AdminLogin() {
         />
 
         <button onClick={login}>Login</button>
-
       </div>
     </div>
   );
