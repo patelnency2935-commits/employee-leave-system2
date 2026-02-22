@@ -2,14 +2,13 @@ import { useState } from "react";
 import "./ApplyLeave.css";
 
 export default function ApplyLeave() {
-
   const [leaveType, setLeaveType] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [reason, setReason] = useState("");
   const [documentPreview, setDocumentPreview] = useState("");
 
-  const applyLeave = () => {
+  const applyLeave = async () => {
     if (!leaveType || !from || !to || !reason) {
       alert("Please fill all fields");
       return;
@@ -43,42 +42,35 @@ export default function ApplyLeave() {
       return;
     }
 
-    // ===== Get existing leaves =====
-    const storedLeaves = JSON.parse(localStorage.getItem("leaves") || "[]");
+    try {
+      await fetch("http://localhost:5000/api/leaves", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: leaveType,
+          from,
+          to,
+          reason,
+          totalDays,
+          status: "Pending",
+          medicalDocument: documentPreview || null,
+        }),
+      });
 
-    const newLeave = {
-      id: Date.now(),
-      from,
-      to,
-      type: leaveType,
-      reason,
-      totalDays,
-      status: "Pending",
-      appliedDate: new Date().toISOString(),
-      medicalDocument: documentPreview || null,
-    };
+      alert("Leave applied successfully!");
 
-    const updatedLeaves = [...storedLeaves, newLeave];
-
-    localStorage.setItem("leaves", JSON.stringify(updatedLeaves));
-
-    // ===== Update Leave Balance =====
-    const currentBalance = parseInt(
-      localStorage.getItem("leaveBalance") || "12"
-    );
-
-    const newBalance = currentBalance - totalDays;
-
-    localStorage.setItem("leaveBalance", newBalance);
-
-    alert("Leave applied successfully!");
-
-    // ✅ Reset form after submit
-    setLeaveType("");
-    setFrom("");
-    setTo("");
-    setReason("");
-    setDocumentPreview("");
+      // Reset form
+      setLeaveType("");
+      setFrom("");
+      setTo("");
+      setReason("");
+      setDocumentPreview("");
+    } catch (error) {
+      console.error("Error applying leave:", error);
+      alert("Error applying leave");
+    }
   };
 
   return (
@@ -87,7 +79,10 @@ export default function ApplyLeave() {
 
       <div className="form-group">
         <label>Leave Type</label>
-        <select value={leaveType} onChange={(e) => setLeaveType(e.target.value)}>
+        <select
+          value={leaveType}
+          onChange={(e) => setLeaveType(e.target.value)}
+        >
           <option value="">Select Leave Type</option>
           <option value="Casual Leave">Casual Leave</option>
           <option value="Sick Leave">Sick Leave</option>
@@ -127,7 +122,9 @@ export default function ApplyLeave() {
 
       {leaveType === "Sick Leave" && (
         <div className="form-group">
-          <label>Upload Medical Certificate (Required if &gt; 2 days)</label>
+          <label>
+            Upload Medical Certificate (Required if &gt; 2 days)
+          </label>
           <input
             type="file"
             accept="image/*,.pdf"

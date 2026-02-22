@@ -1,55 +1,85 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./AdminLogin.css";
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  // Agar already admin login hai to direct dashboard bhejo
-  useEffect(() => {
-    const role = localStorage.getItem("role");
-    if (role === "admin") {
-      navigate("/admin-dashboard");
-    }
-  }, [navigate]);
-
-  const login = () => {
-    if (!username || !password) {
-      alert("Please fill all fields");
-      return;
-    }
-
-    if (username === "admin" && password === "admin123") {
+  const handleLogin = () => {
+    if (email === "admin@gmail.com" && password === "1234") {
       localStorage.setItem("role", "admin");
-      navigate("/admin-dashboard"); // ✅ route fixed
+      navigate("/admin-dashboard");
     } else {
       alert("Invalid Admin Credentials");
     }
   };
 
   return (
-    <div className="admin-login-container">
-      <div className="admin-login-card">
-        <h2>Admin Login</h2>
+    <div style={styles.wrapper}>
+      <div style={styles.card}>
+        <h2 style={styles.title}>Admin Login</h2>
 
         <input
-          type="text"
-          placeholder="Admin Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          style={styles.input}
+          type="email"
+          placeholder="Enter Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
+          style={styles.input}
           type="password"
-          placeholder="Admin Password"
+          placeholder="Enter Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button onClick={login}>Login</button>
+        <button style={styles.button} onClick={handleLogin}>
+          Login
+        </button>
       </div>
     </div>
   );
 }
+
+const styles = {
+  wrapper: {
+    height: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "linear-gradient(135deg, rgb(147, 197, 253))",
+  },
+  card: {
+    background: "#ffffff",
+    padding: "40px",
+    borderRadius: "16px",
+    width: "350px",
+    textAlign: "center",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+  },
+  title: {
+    marginBottom: "20px",
+    fontSize: "24px",
+    fontWeight: "600",
+  },
+  input: {
+    width: "100%",
+    padding: "12px",
+    marginBottom: "15px",
+    borderRadius: "8px",
+    border: "1px solid #ddd",
+  },
+  button: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "8px",
+    border: "none",
+    background: "#2563eb",
+    color: "#fff",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+};

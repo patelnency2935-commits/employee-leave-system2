@@ -21,12 +21,14 @@ export default function LandingPage() {
   const handleLogin = (e) => {
     e.preventDefault();
 
-    if (formData.role === "employee") {
-      localStorage.setItem("role", "employee");
-      navigate("/employee-login");
-    } else {
-      localStorage.setItem("role", "admin");
+    // Save role in localStorage
+    localStorage.setItem("role", formData.role);
+
+    // Navigate based on selected role
+    if (formData.role === "admin") {
       navigate("/admin-login");
+    } else {
+      navigate("/employee-login");
     }
   };
 
