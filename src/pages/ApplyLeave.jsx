@@ -43,12 +43,17 @@ export default function ApplyLeave() {
     }
 
     try {
+      // ✅ GET LOGGED IN USER
+      const user = JSON.parse(localStorage.getItem("user"));
+      const employeeName = user?.name;
+
       await fetch("http://localhost:5000/api/leaves", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          employee: employeeName,   // ✅ IMPORTANT FIX
           type: leaveType,
           from,
           to,
@@ -61,7 +66,6 @@ export default function ApplyLeave() {
 
       alert("Leave applied successfully!");
 
-      // Reset form
       setLeaveType("");
       setFrom("");
       setTo("");

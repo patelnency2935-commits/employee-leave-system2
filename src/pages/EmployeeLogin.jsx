@@ -12,6 +12,17 @@ export default function EmployeeLogin() {
 
     if (email && password) {
       localStorage.setItem("role", "employee");
+
+      // ✅ ADD THIS (User Data Save)
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          name: email.split("@")[0], // temporary name from email
+          email: email,
+          role: "Employee",
+        })
+      );
+
       navigate("/employee-dashboard");
     } else {
       alert("Enter email and password");

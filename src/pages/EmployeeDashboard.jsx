@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
 import ApplyLeave from "./ApplyLeave";
 import MyLeaveHistory from "./MyLeaveHistory";
@@ -6,211 +6,177 @@ import ApproveReject from "./ApproveReject";
 import EmployeeDirectory from "./EmployeeDirectory";
 import LeaveTypes from "./LeaveTypes";
 import Holidays from "./Holidays";
-import Reports from "./Reports";
+import Profile from "./Profile";
 
 export default function EmployeeDashboard() {
   const [activePage, setActivePage] = useState("dashboard");
 
-  const [totalEmployees] = useState(10);
   const [pending, setPending] = useState(0);
+  const [approved, setApproved] = useState(0);
   const [rejected, setRejected] = useState(0);
-  const [onLeaveToday, setOnLeaveToday] = useState(0);
-  const [leaveBalance, setLeaveBalance] = useState(12);
+  const [totalLeaves, setTotalLeaves] = useState(0);
+  const [recentLeaves, setRecentLeaves] = useState([]);
 
-  const [leaves, setLeaves] = useState([]);
+  const formatDate = (date) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString("en-GB");
+  };
 
-  const [departmentFilter, setDepartmentFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-
-  // 🔥 FETCH DATA FROM BACKEND
-  const fetchLeaves = async () => {
+  // ===============================
+  // FETCH DASHBOARD DATA
+  // ===============================
+  const fetchDashboardData = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/leaves");
-      const data = await res.json();
+      const user = JSON.parse(localStorage.getItem("user"));
+      const employeeId = user?._id;
 
-      setLeaves(data);
+      if (!employeeId) return;
 
-      const pendingCount = data.filter(
-        (leave) => leave.status === "Pending"
-      ).length;
+      // ✅ Fetch employee stats
+      const statsRes = await fetch(
+        `http://localhost:5000/api/leaves/employee-stats/${employeeId}`
+      );
+      const statsData = await statsRes.json();
 
-      const rejectedCount = data.filter(
-        (leave) => leave.status === "Rejected"
-      ).length;
+      setPending(statsData.pendingLeaves || 0);
+      setApproved(statsData.approvedLeaves || 0);
+      setRejected(statsData.rejectedLeaves || 0);
+      setTotalLeaves(statsData.totalLeaves || 0);
 
-      const today = new Date().toISOString().split("T")[0];
+      // ✅ Fetch only employee leaves directly
+      const leavesRes = await fetch(
+        `http://localhost:5000/api/leaves/employee/${employeeId}`
+      );
+      const leavesData = await leavesRes.json();
 
-      const todayCount = data.filter(
-        (leave) =>
-          leave.status === "Approved" &&
-          leave.date === today
-      ).length;
+      const lastThree = [...leavesData]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 3);
 
-      setPending(pendingCount);
-      setRejected(rejectedCount);
-      setOnLeaveToday(todayCount);
+      setRecentLeaves(lastThree);
 
     } catch (err) {
-      console.error("Error fetching leaves:", err);
+      console.error("Dashboard Error:", err);
     }
   };
 
   useEffect(() => {
-    fetchLeaves();
+    fetchDashboardData();
   }, []);
 
   useEffect(() => {
-    fetchLeaves();
-  }, [activePage]);
-
-  const filteredLeaves = useMemo(() => {
-    return leaves.filter((leave) => {
-      const matchDepartment =
-        !departmentFilter || leave.department === departmentFilter;
-
-      const matchStatus =
-        !statusFilter || leave.status === statusFilter;
-
-      const matchFrom =
-        !fromDate || new Date(leave.date) >= new Date(fromDate);
-
-      const matchTo =
-        !toDate || new Date(leave.date) <= new Date(toDate);
-
-      return matchDepartment && matchStatus && matchFrom && matchTo;
-    });
-  }, [leaves, departmentFilter, statusFilter, fromDate, toDate]);
-
-  const downloadReport = () => {
-    if (filteredLeaves.length === 0) {
-      alert("No data available for selected filters");
-      return;
+    if (activePage === "dashboard") {
+      fetchDashboardData();
     }
-
-    const headers = ["Employee", "Department", "Type", "Status", "Date"];
-
-    const rows = filteredLeaves.map((leave) => [
-      leave.employee,
-      leave.department,
-      leave.type,
-      leave.status,
-      leave.date,
-    ]);
-
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers, ...rows].map((e) => e.join(",")).join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "leave_report.csv");
-    document.body.appendChild(link);
-    link.click();
-  };
+  }, [activePage]);
 
   return (
     <div style={styles.container}>
       <div style={styles.sidebar}>
-        <h2 style={styles.logo}>Leave System</h2>
+        <div>
+          <h2 style={styles.logo}>Leave System</h2>
 
-        {[
-          ["dashboard", "Dashboard"],
-          ["applyLeave", "Apply Leave"],
-          ["history", "My Leave History"],
-          ["approveReject", "Approve / Reject"],
-          ["directory", "Employee Directory"],
-          ["leaveTypes", "Leave Types"],
-          ["holidays", "Holidays"],
-          ["reports", "Reports"],
-        ].map(([key, label]) => (
-          <p
-            key={key}
-            style={{
-              ...styles.link,
-              ...(activePage === key && styles.activeLink),
-            }}
-            onClick={() => setActivePage(key)}
-          >
-            {label}
-          </p>
-        ))}
+          {[
+            ["dashboard", "Dashboard"],
+            ["applyLeave", "Apply Leave"],
+            ["history", "My Leave History"],
+            ["approveReject", "Approve / Reject"],
+            ["directory", "Employee Directory"],
+            ["leaveTypes", "Leave Types"],
+            ["holidays", "Holidays"],
+          ].map(([key, label]) => (
+            <div
+              key={key}
+              style={{
+                ...styles.link,
+                ...(activePage === key && styles.activeLink),
+              }}
+              onClick={() => setActivePage(key)}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            ...styles.profileLink,
+            ...(activePage === "profile" && styles.activeLink),
+          }}
+          onClick={() => setActivePage("profile")}
+        >
+          👤 Profile
+        </div>
       </div>
 
       <div style={styles.main}>
         {activePage === "dashboard" && (
           <>
-            <h1>📊 Dashboard Overview</h1>
+            <div style={styles.header}>
+              <h1 style={styles.heading}>Dashboard Overview</h1>
+              <button
+                style={styles.button}
+                onClick={() => setActivePage("applyLeave")}
+              >
+                Request Leave
+              </button>
+            </div>
 
-            <div style={styles.cardContainer}>
+            <div style={styles.cards}>
               <div style={styles.card}>
-                <h3>Total Employees</h3>
-                <p>{totalEmployees}</p>
+                <h4>Total Leaves</h4>
+                <p>{totalLeaves}</p>
               </div>
 
               <div style={styles.card}>
-                <h3>Pending Requests</h3>
+                <h4>Approved Leaves</h4>
+                <p>{approved}</p>
+              </div>
+
+              <div style={styles.card}>
+                <h4>Pending Requests</h4>
                 <p>{pending}</p>
               </div>
 
               <div style={styles.card}>
-                <h3>On Leave Today</h3>
-                <p>{onLeaveToday}</p>
-              </div>
-
-              <div style={styles.card}>
-                <h3>Rejected Requests</h3>
+                <h4>Rejected Requests</h4>
                 <p>{rejected}</p>
-              </div>
-
-              <div style={styles.card}>
-                <h3>Total Leave Balance</h3>
-                <p>{leaveBalance} Days</p>
               </div>
             </div>
 
-            <div style={styles.reportSection}>
-              <h2>📅 Reports & Filtering</h2>
+            <div style={styles.tableSection}>
+              <h2 style={styles.subHeading}>Recent Leave Status</h2>
 
-              <div style={styles.filters}>
-                <select
-                  style={styles.input}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
-                >
-                  <option value="">Filter by Department</option>
-                  <option value="IT">IT</option>
-                  <option value="HR">HR</option>
-                  <option value="Sales">Sales</option>
-                </select>
-
-                <select
-                  style={styles.input}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="">Filter by Status</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-
-                <input
-                  type="date"
-                  style={styles.input}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
-
-                <input
-                  type="date"
-                  style={styles.input}
-                  onChange={(e) => setToDate(e.target.value)}
-                />
-
-                <button style={styles.downloadBtn} onClick={downloadReport}>
-                  Download Report
-                </button>
-              </div>
+              {recentLeaves.length === 0 ? (
+                <p style={{ marginTop: "20px" }}>
+                  No recent leave requests
+                </p>
+              ) : (
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Date</th>
+                      <th style={styles.th}>Type</th>
+                      <th style={styles.th}>Status</th>
+                      <th style={styles.th}>Manager Comment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentLeaves.map((leave) => (
+                      <tr key={leave._id}>
+                        <td style={styles.td}>
+                          {formatDate(leave.createdAt)}
+                        </td>
+                        <td style={styles.td}>{leave.type}</td>
+                        <td style={styles.td}>{leave.status}</td>
+                        <td style={styles.td}>
+                          {leave.managerComment || "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </>
         )}
@@ -221,7 +187,7 @@ export default function EmployeeDashboard() {
         {activePage === "directory" && <EmployeeDirectory />}
         {activePage === "leaveTypes" && <LeaveTypes />}
         {activePage === "holidays" && <Holidays />}
-        {activePage === "reports" && <Reports />}
+        {activePage === "profile" && <Profile />}
       </div>
     </div>
   );
@@ -231,76 +197,94 @@ const styles = {
   container: {
     display: "flex",
     minHeight: "100vh",
-    fontFamily: "Arial, sans-serif",
+    fontFamily: "Inter, sans-serif",
+    background: "#f3f6fb",
   },
   sidebar: {
     width: "260px",
-    background: "#1e293b",
+    background: "linear-gradient(180deg,#1e293b,#0f172a)",
     color: "white",
     padding: "30px 20px",
     display: "flex",
     flexDirection: "column",
+    justifyContent: "space-between",
   },
   logo: {
     marginBottom: "40px",
-    textAlign: "center",
     fontSize: "22px",
     fontWeight: "600",
-    letterSpacing: "1px",
-    color: "white",
   },
   link: {
-    padding: "12px 15px",
+    padding: "12px 16px",
     borderRadius: "8px",
-    marginBottom: "10px",
+    marginBottom: "12px",
     cursor: "pointer",
+  },
+  profileLink: {
+    padding: "14px 16px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    background: "rgba(255,255,255,0.05)",
   },
   activeLink: {
     background: "#2563eb",
   },
   main: {
     flex: 1,
-    padding: "30px",
-    background: "#f1f5f9",
+    padding: "40px",
   },
-  cardContainer: {
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  heading: {
+    fontSize: "28px",
+    fontWeight: "600",
+  },
+  button: {
+    padding: "10px 20px",
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+  cards: {
     display: "flex",
     gap: "20px",
-    marginTop: "20px",
+    marginTop: "30px",
     flexWrap: "wrap",
   },
   card: {
     background: "white",
-    padding: "20px",
-    borderRadius: "12px",
-    width: "190px",
-    boxShadow: "0 6px 15px rgba(0,0,0,0.08)",
-    textAlign: "center",
+    padding: "25px",
+    borderRadius: "14px",
+    width: "220px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
   },
-  reportSection: {
+  tableSection: {
     marginTop: "50px",
     background: "white",
-    padding: "25px",
-    borderRadius: "12px",
-    boxShadow: "0 6px 15px rgba(0,0,0,0.08)",
+    padding: "30px",
+    borderRadius: "14px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
   },
-  filters: {
-    display: "flex",
-    gap: "15px",
-    marginTop: "20px",
-    flexWrap: "wrap",
+  subHeading: {
+    fontSize: "20px",
+    marginBottom: "20px",
   },
-  input: {
-    padding: "8px 10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
   },
-  downloadBtn: {
-    padding: "8px 15px",
-    background: "#2563eb",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
+  th: {
+    textAlign: "left",
+    padding: "12px",
+    borderBottom: "2px solid #e2e8f0",
+  },
+  td: {
+    padding: "12px",
+    borderBottom: "1px solid #e2e8f0",
   },
 };

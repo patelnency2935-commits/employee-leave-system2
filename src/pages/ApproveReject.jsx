@@ -6,44 +6,24 @@ function ApproveReject() {
   useEffect(() => {
     fetch("http://localhost:5000/api/leaves")
       .then((res) => res.json())
-      .then((data) => setLeaves(data))
-      .catch((err) => console.error("Error fetching leaves:", err));
+      .then((data) => {
+        // ✅ SAFE ARRAY CHECK
+        if (Array.isArray(data)) {
+          setLeaves(data);
+        } else if (Array.isArray(data.leaves)) {
+          setLeaves(data.leaves);
+        } else {
+          setLeaves([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching leaves:", err);
+        setLeaves([]);
+      });
   }, []);
 
-  const handleApprove = (id) => {
-    fetch(`http://localhost:5000/api/leaves/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "Approved" }),
-    })
-      .then((res) => res.json())
-      .then((updatedLeave) => {
-        const updatedLeaves = leaves.map((leave) =>
-          leave._id === id ? updatedLeave : leave
-        );
-        setLeaves(updatedLeaves);
-      })
-      .catch((err) => console.error("Error approving leave:", err));
-  };
-
-  const handleReject = (id) => {
-    fetch(`http://localhost:5000/api/leaves/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "Rejected" }),
-    })
-      .then((res) => res.json())
-      .then((updatedLeave) => {
-        const updatedLeaves = leaves.map((leave) =>
-          leave._id === id ? updatedLeave : leave
-        );
-        setLeaves(updatedLeaves);
-      })
-      .catch((err) => console.error("Error rejecting leave:", err));
-  };
-
-  // ✅ DATE FORMAT FUNCTION
   const formatDate = (date) => {
+    if (!date) return "-";
     return new Date(date).toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
@@ -54,7 +34,7 @@ function ApproveReject() {
   return (
     <div style={styles.wrapper}>
       <div style={styles.card}>
-        <h2 style={styles.title}>Approve / Reject Leaves</h2>
+        <h2 style={styles.title}>Leave Applications</h2>
 
         <div style={styles.tableWrapper}>
           <table style={styles.table}>
@@ -64,65 +44,49 @@ function ApproveReject() {
                 <th style={styles.th}>From</th>
                 <th style={styles.th}>To</th>
                 <th style={styles.th}>Status</th>
-                <th style={{ ...styles.th, textAlign: "right" }}>Action</th>
+                <th style={styles.th}>Manager Comment</th>
               </tr>
             </thead>
 
             <tbody>
-              {leaves.length === 0 ? (
+              {!Array.isArray(leaves) || leaves.length === 0 ? (
                 <tr>
                   <td colSpan="5" style={styles.noData}>
                     No Leave Applications Found
                   </td>
                 </tr>
               ) : (
-                leaves.map((leave) => (
-                  <tr key={leave._id} style={styles.row}>
-                    <td style={styles.typeCell}>{leave.type}</td>
+                leaves.map((leave) => {
+                  const status = leave.status?.toLowerCase();
 
-                    {/* ✅ Date formatted here */}
-                    <td style={styles.td}>{formatDate(leave.from)}</td>
-                    <td style={styles.td}>{formatDate(leave.to)}</td>
+                  return (
+                    <tr key={leave._id}>
+                      <td style={styles.typeCell}>{leave.type || "-"}</td>
+                      <td style={styles.td}>{formatDate(leave.from)}</td>
+                      <td style={styles.td}>{formatDate(leave.to)}</td>
 
-                    <td style={styles.td}>
-                      <span
-                        style={
-                          leave.status === "Approved"
-                            ? styles.approved
-                            : leave.status === "Rejected"
-                            ? styles.rejected
-                            : styles.pending
-                        }
-                      >
-                        {leave.status}
-                      </span>
-                    </td>
-
-                    <td style={{ ...styles.td, textAlign: "right" }}>
-                      {leave.status === "Pending" ? (
-                        <div style={styles.buttonGroup}>
-                          <button
-                            style={styles.approveBtn}
-                            onClick={() => handleApprove(leave._id)}
-                          >
-                            Approve
-                          </button>
-
-                          <button
-                            style={styles.rejectBtn}
-                            onClick={() => handleReject(leave._id)}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span style={styles.completed}>
-                          Action Completed
+                      <td style={styles.td}>
+                        <span
+                          style={
+                            status === "approved"
+                              ? styles.approved
+                              : status === "rejected"
+                              ? styles.rejected
+                              : styles.pending
+                          }
+                        >
+                          {leave.status || "Pending"}
                         </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+
+                      <td style={styles.td}>
+                        {status === "rejected"
+                          ? leave.managerComment || "No reason provided"
+                          : "-"}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -166,7 +130,6 @@ const styles = {
     color: "#334155",
     borderBottom: "1px solid #f1f5f9",
   },
-  row: { transition: "0.2s ease" },
   typeCell: { fontWeight: "600", color: "#0f172a" },
   approved: {
     backgroundColor: "#dcfce7",
@@ -191,36 +154,6 @@ const styles = {
     borderRadius: "50px",
     fontSize: "12px",
     fontWeight: "600",
-  },
-  buttonGroup: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: "12px",
-  },
-  approveBtn: {
-    background: "linear-gradient(135deg, #22c55e, #16a34a)",
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "10px",
-    color: "#fff",
-    fontSize: "13px",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  rejectBtn: {
-    background: "linear-gradient(135deg, #ef4444, #dc2626)",
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "10px",
-    color: "#fff",
-    fontSize: "13px",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  completed: {
-    fontSize: "13px",
-    color: "#94a3b8",
-    fontWeight: "500",
   },
   noData: {
     textAlign: "center",

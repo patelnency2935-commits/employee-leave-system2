@@ -1,0 +1,120 @@
+.leave-container {
+  padding: 35px;
+  background: #f4f6f9;
+  min-height: 100vh;
+}
+
+.leave-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.leave-header h2 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.filter-dropdown {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.leave-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.leave-card {
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  transition: 0.2s ease;
+}
+
+.leave-card:hover {
+  transform: translateY(-4px);
+}
+
+.leave-details h4 {
+  margin-bottom: 8px;
+  font-size: 17px;
+  color: #111827;
+}
+
+.leave-details p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.status-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: capitalize;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.approved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.leave-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.btn.approve {
+  background: #16a34a;
+  color: white;
+}
+
+.btn.approve:hover {
+  background: #15803d;
+}
+
+.btn.reject {
+  background: #dc2626;
+  color: white;
+}
+
+.btn.reject:hover {
+  background: #b91c1c;
+}

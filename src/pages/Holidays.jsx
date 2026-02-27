@@ -6,13 +6,6 @@ export default function Holidays() {
   const [filterType, setFilterType] = useState("All");
   const [filterMonth, setFilterMonth] = useState("All");
 
-  const [formData, setFormData] = useState({
-    name: "",
-    date: "",
-    type: "Public",
-    region: "All Offices",
-  });
-
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("holidays")) || [];
     setHolidays(stored);
@@ -20,22 +13,6 @@ export default function Holidays() {
 
   const saveData = (data) => {
     localStorage.setItem("holidays", JSON.stringify(data));
-  };
-
-  const addHoliday = () => {
-    if (!formData.name || !formData.date)
-      return alert("Name & Date required");
-
-    const updated = [...holidays, { ...formData, id: Date.now() }];
-    setHolidays(updated);
-    saveData(updated);
-
-    setFormData({
-      name: "",
-      date: "",
-      type: "Public",
-      region: "All Offices",
-    });
   };
 
   const deleteHoliday = (id) => {
@@ -58,54 +35,6 @@ export default function Holidays() {
   return (
     <div style={styles.wrapper}>
       <h1 style={styles.heading}>📅 Holiday Management</h1>
-
-      {/* Add Holiday */}
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>Add Holiday</h3>
-
-        <input
-          style={styles.input}
-          placeholder="Holiday Name"
-          value={formData.name}
-          onChange={(e) =>
-            setFormData({ ...formData, name: e.target.value })
-          }
-        />
-
-        <input
-          style={styles.input}
-          type="date"
-          value={formData.date}
-          onChange={(e) =>
-            setFormData({ ...formData, date: e.target.value })
-          }
-        />
-
-        <select
-          style={styles.input}
-          value={formData.type}
-          onChange={(e) =>
-            setFormData({ ...formData, type: e.target.value })
-          }
-        >
-          <option>Public</option>
-          <option>Optional</option>
-          <option>Regional</option>
-        </select>
-
-        <input
-          style={styles.input}
-          placeholder="Region (Delhi Office, Mumbai Office)"
-          value={formData.region}
-          onChange={(e) =>
-            setFormData({ ...formData, region: e.target.value })
-          }
-        />
-
-        <button style={styles.primaryBtn} onClick={addHoliday}>
-          Add Holiday
-        </button>
-      </div>
 
       {/* Filters */}
       <div style={styles.card}>
@@ -233,17 +162,6 @@ const styles = {
     fontSize: "14px",
     outline: "none",
     transition: "0.2s",
-  },
-
-  primaryBtn: {
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "#ffffff",
-    padding: "12px",
-    border: "none",
-    borderRadius: "10px",
-    fontWeight: "600",
-    cursor: "pointer",
-    boxShadow: "0 6px 15px rgba(37,99,235,0.3)",
   },
 
   secondaryBtn: {

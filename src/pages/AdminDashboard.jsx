@@ -8,24 +8,44 @@ function AdminDashboard() {
 
   const [stats, setStats] = useState({
     totalEmployees: 0,
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    onLeaveToday: 0,
+    pendingLeaves: 0,
+    todayAbsentees: 0,
+    upcomingHolidays: 0,
   });
 
+  const [recentActivity, setRecentActivity] = useState([]);
+
   useEffect(() => {
-    fetchStats();
+    fetchDashboardData();
   }, []);
 
-  const fetchStats = async () => {
+  // ✅ UPDATED API ROUTE
+  const fetchDashboardData = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/dashboard/stats"
+        "http://localhost:5000/api/leaves/admin-stats"
       );
-      setStats(res.data);
+
+      setStats({
+        totalEmployees: res.data.totalEmployees || 0,
+        pendingLeaves: res.data.pendingLeaves || 0,
+        todayAbsentees: res.data.onLeaveToday || 0,
+        upcomingHolidays: 0,
+      });
+
+      // Optional: fetch recent leaves
+      const leavesRes = await axios.get(
+        "http://localhost:5000/api/leaves"
+      );
+
+      const sortedLeaves = leavesRes.data
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+
+      setRecentActivity(sortedLeaves);
+
     } catch (error) {
-      console.error("Error fetching dashboard stats", error);
+      console.error("Error fetching dashboard data", error);
     }
   };
 
@@ -40,24 +60,44 @@ function AdminDashboard() {
         return (
           <div>
             <h2>📊 Overview</h2>
+
             <div style={styles.cardContainer}>
               <div style={styles.card}>
-                Total Employees: {stats.totalEmployees}
+                <h3>Total Employees</h3>
+                <p>{stats.totalEmployees}</p>
               </div>
+
               <div style={styles.card}>
-                Pending Requests: {stats.pending}
+                <h3>Pending Requests</h3>
+                <p>{stats.pendingLeaves}</p>
               </div>
+
               <div style={styles.card}>
-                Approved: {stats.approved}
+                <h3>On Leave Today</h3>
+                <p>{stats.todayAbsentees}</p>
               </div>
+
               <div style={styles.card}>
-                Rejected: {stats.rejected}
+                <h3>Upcoming Holidays</h3>
+                <p>{stats.upcomingHolidays}</p>
               </div>
-              <div style={styles.card}>
-                On Leave Today: {stats.onLeaveToday}
-              </div>
-              <div style={styles.card}>Leave Balance Summary</div>
             </div>
+
+            <h3 style={{ marginTop: "30px" }}>
+              Recent Leave Activity
+            </h3>
+
+            {recentActivity.length === 0 ? (
+              <p>No recent activity</p>
+            ) : (
+              <ul>
+                {recentActivity.map((leave, index) => (
+                  <li key={index}>
+                    {leave.employee} — {leave.type} — {leave.status}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         );
 
@@ -83,7 +123,6 @@ function AdminDashboard() {
               <li>Pending</li>
               <li>Approved</li>
               <li>Rejected</li>
-              <li>Filter by Date / Department</li>
             </ul>
           </div>
         );
@@ -92,11 +131,6 @@ function AdminDashboard() {
         return (
           <div>
             <h2>✔️ Approval Panel</h2>
-            <ul>
-              <li>View Request Details</li>
-              <li>Approve</li>
-              <li>Reject with Reason</li>
-            </ul>
           </div>
         );
 
@@ -104,11 +138,6 @@ function AdminDashboard() {
         return (
           <div>
             <h2>📋 Employee Directory</h2>
-            <ul>
-              <li>Search Employee</li>
-              <li>Filter by Department</li>
-              <li>View Profile</li>
-            </ul>
           </div>
         );
 
@@ -116,11 +145,6 @@ function AdminDashboard() {
         return (
           <div>
             <h2>📝 Leave Types</h2>
-            <ul>
-              <li>Add Leave Type</li>
-              <li>Edit Leave Days</li>
-              <li>Delete Leave Type</li>
-            </ul>
           </div>
         );
 
@@ -128,11 +152,6 @@ function AdminDashboard() {
         return (
           <div>
             <h2>📅 Company Holidays</h2>
-            <ul>
-              <li>Add Holiday</li>
-              <li>Edit Holiday</li>
-              <li>Delete Holiday</li>
-            </ul>
           </div>
         );
 
@@ -140,11 +159,6 @@ function AdminDashboard() {
         return (
           <div>
             <h2>📊 Reports</h2>
-            <ul>
-              <li>Monthly Leave Report</li>
-              <li>Department-wise Report</li>
-              <li>Export CSV / PDF</li>
-            </ul>
           </div>
         );
 
@@ -152,11 +166,6 @@ function AdminDashboard() {
         return (
           <div>
             <h2>⚙️ Settings</h2>
-            <ul>
-              <li>Change Password</li>
-              <li>Update Profile</li>
-              <li>System Settings</li>
-            </ul>
           </div>
         );
 
@@ -227,7 +236,6 @@ const styles = {
   logo: {
     marginBottom: "30px",
     textAlign: "center",
-    color: "white",
   },
   menu: {
     listStyle: "none",
