@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import LeaveHistory from "./admin/LeaveHistory";
+import Departments from "./admin/Departments";
+import LeaveBalance from "./admin/LeaveBalance";
+import CalendarView from "./admin/CalendarView";
+import EmailNotifications from "./admin/EmailNotifications";
 
 function AdminDashboard() {
+
   const [activeSection, setActiveSection] = useState("dashboard");
   const navigate = useNavigate();
 
@@ -19,9 +25,9 @@ function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  // ✅ UPDATED API ROUTE
   const fetchDashboardData = async () => {
     try {
+
       const res = await axios.get(
         "http://localhost:5000/api/leaves/admin-stats"
       );
@@ -33,19 +39,18 @@ function AdminDashboard() {
         upcomingHolidays: 0,
       });
 
-      // Optional: fetch recent leaves
       const leavesRes = await axios.get(
         "http://localhost:5000/api/leaves"
       );
 
       const sortedLeaves = leavesRes.data
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .sort((a, b) => new Date(b.appliedOn) - new Date(a.appliedOn))
         .slice(0, 5);
 
       setRecentActivity(sortedLeaves);
 
     } catch (error) {
-      console.error("Error fetching dashboard data", error);
+      console.log(error);
     }
   };
 
@@ -55,13 +60,17 @@ function AdminDashboard() {
   };
 
   const renderContent = () => {
+
     switch (activeSection) {
+
       case "dashboard":
         return (
           <div>
+
             <h2>📊 Overview</h2>
 
             <div style={styles.cardContainer}>
+
               <div style={styles.card}>
                 <h3>Total Employees</h3>
                 <p>{stats.totalEmployees}</p>
@@ -81,10 +90,11 @@ function AdminDashboard() {
                 <h3>Upcoming Holidays</h3>
                 <p>{stats.upcomingHolidays}</p>
               </div>
+
             </div>
 
             <h3 style={{ marginTop: "30px" }}>
-              Recent Leave Activity
+              📜 Leave History Page
             </h3>
 
             {recentActivity.length === 0 ? (
@@ -93,81 +103,29 @@ function AdminDashboard() {
               <ul>
                 {recentActivity.map((leave, index) => (
                   <li key={index}>
-                    {leave.employee} — {leave.type} — {leave.status}
+                    {leave.employee?.name} — {leave.type} — {leave.status}
                   </li>
                 ))}
               </ul>
             )}
+
           </div>
         );
 
-      case "manageEmployees":
-        return (
-          <div>
-            <h2>👩‍💼 Employee Management</h2>
-            <ul>
-              <li>Add Employee</li>
-              <li>Edit Employee</li>
-              <li>Delete Employee</li>
-              <li>Activate / Deactivate</li>
-            </ul>
-          </div>
-        );
+      case "leaveHistory":
+        return <LeaveHistory />;
 
-      case "leaveRequests":
-        return (
-          <div>
-            <h2>📩 Leave Applications</h2>
-            <ul>
-              <li>All Requests</li>
-              <li>Pending</li>
-              <li>Approved</li>
-              <li>Rejected</li>
-            </ul>
-          </div>
-        );
+      case "departments":
+        return <Departments />;
 
-      case "approveReject":
-        return (
-          <div>
-            <h2>✔️ Approval Panel</h2>
-          </div>
-        );
+      case "leaveBalance":
+        return <LeaveBalance />;
 
-      case "employeeDirectory":
-        return (
-          <div>
-            <h2>📋 Employee Directory</h2>
-          </div>
-        );
+      case "calendarView":
+        return <CalendarView />;
 
-      case "leaveTypes":
-        return (
-          <div>
-            <h2>📝 Leave Types</h2>
-          </div>
-        );
-
-      case "holidays":
-        return (
-          <div>
-            <h2>📅 Company Holidays</h2>
-          </div>
-        );
-
-      case "reports":
-        return (
-          <div>
-            <h2>📊 Reports</h2>
-          </div>
-        );
-
-      case "settings":
-        return (
-          <div>
-            <h2>⚙️ Settings</h2>
-          </div>
-        );
+      case "emailNotifications":
+        return <EmailNotifications />;
 
       default:
         return <h2>Welcome</h2>;
@@ -175,22 +133,24 @@ function AdminDashboard() {
   };
 
   return (
+
     <div style={styles.container}>
+
       <div style={styles.sidebar}>
+
         <h2 style={styles.logo}>Admin Panel</h2>
 
         <ul style={styles.menu}>
+
           {[
             { key: "dashboard", label: "Dashboard" },
-            { key: "manageEmployees", label: "Manage Employees" },
-            { key: "leaveRequests", label: "Leave Requests" },
-            { key: "approveReject", label: "Approve / Reject" },
-            { key: "employeeDirectory", label: "Employee Directory" },
-            { key: "leaveTypes", label: "Leave Types" },
-            { key: "holidays", label: "Holidays" },
-            { key: "reports", label: "Reports" },
-            { key: "settings", label: "Settings" },
+            { key: "leaveHistory", label: "Leave History" },
+            { key: "departments", label: "Departments" },
+            { key: "leaveBalance", label: "Leave Balance" },
+            { key: "calendarView", label: "Calendar View" },
+            { key: "emailNotifications", label: "Email Notifications" },
           ].map((item) => (
+
             <li
               key={item.key}
               onClick={() => setActiveSection(item.key)}
@@ -202,29 +162,38 @@ function AdminDashboard() {
             >
               {item.label}
             </li>
+
           ))}
+
         </ul>
 
         <button style={styles.logout} onClick={handleLogout}>
           Logout
         </button>
+
       </div>
 
       <div style={styles.content}>
+
         <h1>Admin Dashboard</h1>
+
         {renderContent()}
+
       </div>
+
     </div>
   );
 }
 
 const styles = {
+
   container: {
     display: "flex",
     height: "100vh",
-    fontFamily: "Segoe UI, sans-serif",
+    fontFamily: "Segoe UI",
     backgroundColor: "#f4f6f9",
   },
+
   sidebar: {
     width: "260px",
     backgroundColor: "#1f2937",
@@ -233,21 +202,25 @@ const styles = {
     flexDirection: "column",
     padding: "25px 15px",
   },
+
   logo: {
     marginBottom: "30px",
     textAlign: "center",
   },
+
   menu: {
     listStyle: "none",
     padding: 0,
     flex: 1,
   },
+
   menuItem: {
     padding: "12px",
     marginBottom: "8px",
     borderRadius: "6px",
     cursor: "pointer",
   },
+
   logout: {
     backgroundColor: "#ef4444",
     border: "none",
@@ -256,22 +229,26 @@ const styles = {
     color: "white",
     cursor: "pointer",
   },
+
   content: {
     flex: 1,
     padding: "40px",
   },
+
   cardContainer: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
     gap: "20px",
     marginTop: "20px",
   },
+
   card: {
     backgroundColor: "white",
     padding: "20px",
     borderRadius: "8px",
     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-  },
+  }
+
 };
 
 export default AdminDashboard;
