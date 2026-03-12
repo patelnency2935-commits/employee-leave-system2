@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import "./AdminLogin.css";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = (e) => {
+    e.preventDefault();
     if (email === "admin@gmail.com" && password === "1234") {
       localStorage.setItem("role", "admin");
       navigate("/admin-dashboard");
@@ -16,70 +18,44 @@ export default function AdminLogin() {
   };
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Admin Login</h2>
+    <div className="admin-login-wrapper">
+      <div className="admin-login-card">
+        <span className="admin-login-badge">🔐 Admin Access</span>
+        <h2>Administrator Login</h2>
+        <p>Enter your credentials to access the admin panel</p>
 
-        <input
-          style={styles.input}
-          type="email"
-          placeholder="Enter Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <form onSubmit={handleLogin}>
+          <div className="admin-field">
+            <label htmlFor="admin-email">Email address</label>
+            <input
+              id="admin-email"
+              type="email"
+              placeholder="admin@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-        <input
-          style={styles.input}
-          type="password"
-          placeholder="Enter Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <div className="admin-field">
+            <label htmlFor="admin-password">Password</label>
+            <input
+              id="admin-password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-        <button style={styles.button} onClick={handleLogin}>
-          Login
-        </button>
+          <button type="submit" className="admin-login-btn">
+            Sign In →
+          </button>
+        </form>
+
+        <Link to="/" className="back-link">← Back to home</Link>
       </div>
     </div>
   );
 }
-
-const styles = {
-  wrapper: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(135deg, rgb(147, 197, 253))",
-  },
-  card: {
-    background: "#ffffff",
-    padding: "40px",
-    borderRadius: "16px",
-    width: "350px",
-    textAlign: "center",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-  },
-  title: {
-    marginBottom: "20px",
-    fontSize: "24px",
-    fontWeight: "600",
-  },
-  input: {
-    width: "100%",
-    padding: "12px",
-    marginBottom: "15px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-  },
-  button: {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#2563eb",
-    color: "#fff",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-};

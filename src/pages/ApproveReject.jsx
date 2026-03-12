@@ -3,11 +3,10 @@ import React, { useState, useEffect } from "react";
 function ApproveReject() {
   const [leaves, setLeaves] = useState([]);
 
-  useEffect(() => {
+  const fetchLeaves = () => {
     fetch("http://localhost:5000/api/leaves")
       .then((res) => res.json())
       .then((data) => {
-        // ✅ SAFE ARRAY CHECK
         if (Array.isArray(data)) {
           setLeaves(data);
         } else if (Array.isArray(data.leaves)) {
@@ -20,10 +19,15 @@ function ApproveReject() {
         console.error("Error fetching leaves:", err);
         setLeaves([]);
       });
+  };
+
+  useEffect(() => {
+    fetchLeaves();
   }, []);
 
   const formatDate = (date) => {
     if (!date) return "-";
+
     return new Date(date).toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
@@ -62,8 +66,15 @@ function ApproveReject() {
                   return (
                     <tr key={leave._id}>
                       <td style={styles.typeCell}>{leave.type || "-"}</td>
-                      <td style={styles.td}>{formatDate(leave.from)}</td>
-                      <td style={styles.td}>{formatDate(leave.to)}</td>
+
+                      {/* ✅ FIXED HERE */}
+                      <td style={styles.td}>
+                        {formatDate(leave.startDate)}
+                      </td>
+
+                      <td style={styles.td}>
+                        {formatDate(leave.endDate)}
+                      </td>
 
                       <td style={styles.td}>
                         <span

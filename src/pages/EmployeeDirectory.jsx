@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function EmployeeDirectory() {
-  const [employees, setEmployees] = useState([
+
+  const defaultEmployees = [
     {
       id: "EMP001",
       name: "Rahul Sharma",
@@ -20,10 +21,29 @@ function EmployeeDirectory() {
       leaveBalance: { sick: 2, casual: 1, annual: 6 },
       status: "On Leave",
     },
-  ]);
+  ];
 
+  const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [mode, setMode] = useState("");
+
+  useEffect(() => {
+
+    const storedEmployees = JSON.parse(localStorage.getItem("employees"));
+
+    if (storedEmployees) {
+      setEmployees(storedEmployees);
+    } else {
+      setEmployees(defaultEmployees);
+      localStorage.setItem("employees", JSON.stringify(defaultEmployees));
+    }
+
+  }, []);
+
+  const saveEmployees = (data) => {
+    setEmployees(data);
+    localStorage.setItem("employees", JSON.stringify(data));
+  };
 
   const handleView = (emp) => {
     setSelectedEmployee(emp);
@@ -57,19 +77,39 @@ function EmployeeDirectory() {
   };
 
   const handleSave = () => {
-    const updated = employees.map((emp) =>
+
+    const updatedEmployees = employees.map((emp) =>
       emp.id === selectedEmployee.id ? selectedEmployee : emp
     );
-    setEmployees(updated);
+
+    saveEmployees(updatedEmployees);
     closeModal();
+
+  };
+
+  const handleDelete = (id) => {
+
+    const updatedEmployees = employees.filter(emp => emp.id !== id);
+
+    saveEmployees(updatedEmployees);
+
   };
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.heading}>Employee Directory</h2>
+
+      <h2 style={styles.heading}>
+        Employee Directory
+      </h2>
+
+      <p style={styles.count}>
+        Total Employees : {employees.length}
+      </p>
 
       <div style={styles.card}>
+
         <table style={styles.table}>
+
           <thead>
             <tr>
               <th style={styles.th}>Employee</th>
@@ -81,8 +121,11 @@ function EmployeeDirectory() {
           </thead>
 
           <tbody>
+
             {employees.map((emp) => (
+
               <tr key={emp.id}>
+
                 <td style={styles.td}>
                   <strong>{emp.name}</strong>
                   <div style={styles.subText}>{emp.role}</div>
@@ -92,12 +135,11 @@ function EmployeeDirectory() {
                 <td style={styles.td}>{emp.department}</td>
 
                 <td style={styles.td}>
-                  Sick: {emp.leaveBalance.sick} | Casual:{" "}
-                  {emp.leaveBalance.casual} | Annual:{" "}
-                  {emp.leaveBalance.annual}
+                  Sick: {emp.leaveBalance.sick} | Casual: {emp.leaveBalance.casual} | Annual: {emp.leaveBalance.annual}
                 </td>
 
                 <td style={styles.td}>
+
                   <span
                     style={{
                       ...styles.statusBadge,
@@ -113,9 +155,11 @@ function EmployeeDirectory() {
                   >
                     {emp.status}
                   </span>
+
                 </td>
 
                 <td style={styles.td}>
+
                   <button
                     style={styles.viewBtn}
                     onClick={() => handleView(emp)}
@@ -129,17 +173,32 @@ function EmployeeDirectory() {
                   >
                     Edit
                   </button>
+
+                  <button
+                    style={styles.deleteBtn}
+                    onClick={() => handleDelete(emp.id)}
+                  >
+                    Delete
+                  </button>
+
                 </td>
+
               </tr>
+
             ))}
+
           </tbody>
+
         </table>
+
       </div>
 
-      {/* MODAL */}
       {selectedEmployee && (
+
         <div style={styles.modalOverlay}>
+
           <div style={styles.modal}>
+
             <h3>
               {mode === "view" ? "Employee Details" : "Edit Employee"}
             </h3>
@@ -149,19 +208,11 @@ function EmployeeDirectory() {
             <p><strong>Role:</strong> {selectedEmployee.role}</p>
             <p><strong>Joining Date:</strong> {selectedEmployee.joiningDate}</p>
 
-            {mode === "view" ? (
-              <>
-                <p><strong>Department:</strong> {selectedEmployee.department}</p>
-                <p><strong>Status:</strong> {selectedEmployee.status}</p>
-                <p>
-                  <strong>Leave Balance:</strong> Sick {selectedEmployee.leaveBalance.sick},
-                  Casual {selectedEmployee.leaveBalance.casual},
-                  Annual {selectedEmployee.leaveBalance.annual}
-                </p>
-              </>
-            ) : (
+            {mode === "edit" && (
+
               <>
                 <label>Department</label>
+
                 <input
                   style={styles.input}
                   name="department"
@@ -170,6 +221,7 @@ function EmployeeDirectory() {
                 />
 
                 <label>Status</label>
+
                 <select
                   style={styles.input}
                   name="status"
@@ -181,6 +233,7 @@ function EmployeeDirectory() {
                 </select>
 
                 <label>Sick</label>
+
                 <input
                   type="number"
                   style={styles.input}
@@ -190,6 +243,7 @@ function EmployeeDirectory() {
                 />
 
                 <label>Casual</label>
+
                 <input
                   type="number"
                   style={styles.input}
@@ -199,6 +253,7 @@ function EmployeeDirectory() {
                 />
 
                 <label>Annual</label>
+
                 <input
                   type="number"
                   style={styles.input}
@@ -207,34 +262,51 @@ function EmployeeDirectory() {
                   onChange={handleChange}
                 />
 
-                <button style={styles.saveBtn} onClick={handleSave}>
+                <button
+                  style={styles.saveBtn}
+                  onClick={handleSave}
+                >
                   Save Changes
                 </button>
+
               </>
+
             )}
 
-            <button style={styles.closeBtn} onClick={closeModal}>
+            <button
+              style={styles.closeBtn}
+              onClick={closeModal}
+            >
               Close
             </button>
+
           </div>
+
         </div>
+
       )}
+
     </div>
   );
 }
 
 const styles = {
+
   container: { padding: "30px" },
 
   heading: {
     fontSize: "26px",
     fontWeight: "600",
+    marginBottom: "10px",
+  },
+
+  count: {
     marginBottom: "20px",
-    color: "#1f2937",
+    color: "#6b7280",
   },
 
   card: {
-    backgroundColor: "#fff",
+    background: "#fff",
     padding: "20px",
     borderRadius: "12px",
     boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
@@ -246,7 +318,7 @@ const styles = {
     textAlign: "left",
     padding: "14px",
     borderBottom: "2px solid #e5e7eb",
-    backgroundColor: "#f9fafb",
+    background: "#f9fafb",
   },
 
   td: {
@@ -267,17 +339,27 @@ const styles = {
   },
 
   viewBtn: {
-    backgroundColor: "#2563eb",
+    background: "#2563eb",
     color: "#fff",
     border: "none",
     padding: "6px 12px",
     borderRadius: "6px",
-    marginRight: "8px",
+    marginRight: "6px",
     cursor: "pointer",
   },
 
   editBtn: {
-    backgroundColor: "#f59e0b",
+    background: "#f59e0b",
+    color: "#fff",
+    border: "none",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    marginRight: "6px",
+    cursor: "pointer",
+  },
+
+  deleteBtn: {
+    background: "#ef4444",
     color: "#fff",
     border: "none",
     padding: "6px 12px",
@@ -291,11 +373,10 @@ const styles = {
     left: 0,
     width: "100%",
     height: "100%",
-    backgroundColor: "rgba(0,0,0,0.55)",
+    background: "rgba(0,0,0,0.55)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 1000,
   },
 
   modal: {
@@ -303,7 +384,6 @@ const styles = {
     padding: "25px",
     borderRadius: "14px",
     width: "420px",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
     display: "flex",
     flexDirection: "column",
     gap: "10px",
@@ -311,12 +391,12 @@ const styles = {
 
   input: {
     padding: "8px",
-    borderRadius: "6px",
     border: "1px solid #d1d5db",
+    borderRadius: "6px",
   },
 
   saveBtn: {
-    backgroundColor: "#16a34a",
+    background: "#16a34a",
     color: "#fff",
     padding: "8px",
     border: "none",
@@ -325,14 +405,15 @@ const styles = {
   },
 
   closeBtn: {
-    backgroundColor: "#ef4444",
+    background: "#ef4444",
     color: "#fff",
     padding: "8px",
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
     marginTop: "5px",
-  },
+  }
+
 };
 
 export default EmployeeDirectory;

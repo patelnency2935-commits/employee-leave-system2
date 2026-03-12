@@ -1,14 +1,84 @@
-body {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after {
   margin: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f4f6f8;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --navy-900: #0f172a;
+  --navy-800: #1e293b;
+  --navy-700: #334155;
+  --blue-600: #2563eb;
+  --blue-500: #3b82f6;
+  --blue-100: #dbeafe;
+  --green-500: #22c55e;
+  --green-100: #dcfce7;
+  --yellow-500: #eab308;
+  --yellow-100: #fef9c3;
+  --red-500: #ef4444;
+  --red-100: #fee2e2;
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-700: #334155;
+  --slate-900: #0f172a;
+  --white: #ffffff;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 32px rgba(0,0,0,0.10);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--slate-100);
+  color: var(--slate-900);
+  line-height: 1.6;
 }
 
 button {
   cursor: pointer;
+  font-family: inherit;
   font-size: 14px;
 }
 
-h2 {
-  color: #333;
+input, select, textarea {
+  font-family: inherit;
 }
+
+h1, h2, h3, h4, h5 {
+  color: var(--slate-900);
+  line-height: 1.3;
+}
+
+/* Utility: status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.badge-green  { background: var(--green-100);  color: #16a34a; }
+.badge-yellow { background: var(--yellow-100); color: #a16207; }
+.badge-red    { background: var(--red-100);    color: #dc2626; }
+.badge-blue   { background: var(--blue-100);   color: var(--blue-600); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--slate-200); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }

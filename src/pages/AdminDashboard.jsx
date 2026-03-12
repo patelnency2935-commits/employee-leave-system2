@@ -2,13 +2,59 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import LeaveHistory from "./admin/LeaveHistory";
+import ManageEmployees from "./admin/ManageEmployees";
+import AddEmployee from "./admin/AddEmployee";
 import Departments from "./admin/Departments";
-import LeaveBalance from "./admin/LeaveBalance";
-import CalendarView from "./admin/CalendarView";
-import EmailNotifications from "./admin/EmailNotifications";
+import LeaveTypes from "./admin/LeaveTypes";
+import Holidays from "./admin/Holidays";
+import AuditLogs from "./admin/AuditLogs";
+import Reports from "./admin/Reports";
+import "./AdminDashboard.css";
+
+const navGroups = [
+  {
+    title: "Core Management",
+    items: [
+      { key: "dashboard",         label: "Dashboard",            icon: "📊" },
+      { key: "leaveHistory",      label: "Leave Requests",       icon: "📋" },
+    ]
+  },
+  {
+    title: "Employee Center",
+    items: [
+      { key: "manageEmployees",   label: "Manage Employees",     icon: "👥" },
+      { key: "addEmployee",       label: "Add Employee",         icon: "➕" },
+    ]
+  },
+  {
+    title: "Organization",
+    items: [
+      { key: "departments",       label: "Departments",          icon: "🏢" },
+      { key: "leaveTypes",        label: "Leave Types",          icon: "⚖️" },
+      { key: "holidays",          label: "Holiday Calendar",     icon: "📅" },
+    ]
+  },
+  {
+    title: "System & Insights",
+    items: [
+      { key: "reports",           label: "Reports & Analytics",  icon: "📈" },
+      { key: "auditLogs",         label: "Audit Logs",           icon: "📜" },
+    ]
+  }
+];
+
+function StatusBadge({ status }) {
+  const s = (status || "").toLowerCase();
+  const label = s.charAt(0).toUpperCase() + s.slice(1);
+  
+  return (
+    <span className={`badge badge-${s === "approved" ? "green" : s === "rejected" ? "red" : "yellow"}`}>
+      {label}
+    </span>
+  );
+}
 
 function AdminDashboard() {
-
   const [activeSection, setActiveSection] = useState("dashboard");
   const navigate = useNavigate();
 
@@ -23,32 +69,35 @@ function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 30000);
+    window.addEventListener("adminLeaveUpdated", fetchDashboardData);
+    window.addEventListener("leaveUpdated", fetchDashboardData);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("adminLeaveUpdated", fetchDashboardData);
+      window.removeEventListener("leaveUpdated", fetchDashboardData);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
     try {
-
-      const res = await axios.get(
-        "http://localhost:5000/api/leaves/admin-stats"
-      );
+      const res = await axios.get("http://localhost:5000/api/leaves/admin-stats");
+      const holidaysRes = await axios.get("http://localhost:5000/api/holidays");
+      
+      const upcoming = (holidaysRes.data || []).filter(h => new Date(h.date) >= new Date()).length;
 
       setStats({
         totalEmployees: res.data.totalEmployees || 0,
-        pendingLeaves: res.data.pendingLeaves || 0,
-        todayAbsentees: res.data.onLeaveToday || 0,
-        upcomingHolidays: 0,
+        pendingLeaves:  res.data.pendingLeaves  || 0,
+        todayAbsentees: res.data.onLeaveToday   || 0,
+        upcomingHolidays: upcoming || 0,
       });
 
-      const leavesRes = await axios.get(
-        "http://localhost:5000/api/leaves"
-      );
-
-      const sortedLeaves = leavesRes.data
-        .sort((a, b) => new Date(b.appliedOn) - new Date(a.appliedOn))
-        .slice(0, 5);
-
+      const leavesRes = await axios.get("http://localhost:5000/api/leaves");
+      const sortedLeaves = (Array.isArray(leavesRes.data) ? leavesRes.data : (leavesRes.data.leaves || []))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 8);
       setRecentActivity(sortedLeaves);
-
     } catch (error) {
       console.log(error);
     }
@@ -60,195 +109,133 @@ function AdminDashboard() {
   };
 
   const renderContent = () => {
-
     switch (activeSection) {
-
       case "dashboard":
         return (
-          <div>
-
-            <h2>📊 Overview</h2>
-
-            <div style={styles.cardContainer}>
-
-              <div style={styles.card}>
-                <h3>Total Employees</h3>
-                <p>{stats.totalEmployees}</p>
+          <>
+            <div className="admin-topbar">
+              <div>
+                <h1 className="admin-page-title">Admin Command Center</h1>
+                <p className="admin-page-subtitle">Real-time overview of your workforce and leave operations</p>
               </div>
-
-              <div style={styles.card}>
-                <h3>Pending Requests</h3>
-                <p>{stats.pendingLeaves}</p>
-              </div>
-
-              <div style={styles.card}>
-                <h3>On Leave Today</h3>
-                <p>{stats.todayAbsentees}</p>
-              </div>
-
-              <div style={styles.card}>
-                <h3>Upcoming Holidays</h3>
-                <p>{stats.upcomingHolidays}</p>
-              </div>
-
             </div>
 
-            <h3 style={{ marginTop: "30px" }}>
-              📜 Leave History Page
-            </h3>
+            <div className="admin-cards">
+              <div className="admin-card blue">
+                <div className="admin-card-icon">👥</div>
+                <div className="admin-card-value">{stats.totalEmployees}</div>
+                <div className="admin-card-label">Total Workforce</div>
+              </div>
+              <div className="admin-card yellow">
+                <div className="admin-card-icon">⏳</div>
+                <div className="admin-card-value">{stats.pendingLeaves}</div>
+                <div className="admin-card-label">Pending Approval</div>
+              </div>
+              <div className="admin-card green">
+                <div className="admin-card-icon">🌈</div>
+                <div className="admin-card-value">{stats.todayAbsentees}</div>
+                <div className="admin-card-label">Away Today</div>
+              </div>
+              <div className="admin-card purple">
+                <div className="admin-card-icon">📅</div>
+                <div className="admin-card-value">{stats.upcomingHolidays}</div>
+                <div className="admin-card-label">Public Holidays</div>
+              </div>
+            </div>
 
-            {recentActivity.length === 0 ? (
-              <p>No recent activity</p>
-            ) : (
-              <ul>
-                {recentActivity.map((leave, index) => (
-                  <li key={index}>
-                    {leave.employee?.name} — {leave.type} — {leave.status}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-          </div>
+            <div className="admin-section">
+              <h3 className="admin-section-title">🕒 Recent Activities</h3>
+              {recentActivity.length === 0 ? (
+                <div className="admin-empty">No recent leave requests recorded.</div>
+              ) : (
+                <div className="admin-table-container">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Employee</th>
+                        <th>Type</th>
+                        <th>Applied On</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentActivity.map((leave, index) => (
+                        <tr key={leave._id || index}>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "bold" }}>
+                                {leave.employee?.name?.charAt(0) || "E"}
+                              </div>
+                              {leave.employee?.name || "Anonymous"}
+                            </div>
+                          </td>
+                          <td>{leave.type}</td>
+                          <td>{new Date(leave.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                          <td>
+                            <StatusBadge status={leave.status} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
         );
 
-      case "leaveHistory":
-        return <LeaveHistory />;
-
-      case "departments":
-        return <Departments />;
-
-      case "leaveBalance":
-        return <LeaveBalance />;
-
-      case "calendarView":
-        return <CalendarView />;
-
-      case "emailNotifications":
-        return <EmailNotifications />;
-
-      default:
-        return <h2>Welcome</h2>;
+      case "leaveHistory":      return <LeaveHistory />;
+      case "manageEmployees":   return <ManageEmployees />;
+      case "addEmployee":       return <AddEmployee />;
+      case "departments":       return <Departments />;
+      case "leaveTypes":        return <LeaveTypes />;
+      case "holidays":          return <Holidays />;
+      case "reports":           return <Reports />;
+      case "auditLogs":         return <AuditLogs />;
+      default:                  return null;
     }
   };
 
   return (
+    <div className="admin-container">
+      <aside className="admin-sidebar" style={{overflowX: 'hidden'}}>
+        <div className="admin-sidebar-top">
+          <div className="admin-logo">
+            <div className="admin-logo-icon">✨</div>
+            <span className="admin-logo-text">LeaveSync <span style={{fontSize: 10, opacity: 0.5}}>Pro</span></span>
+          </div>
 
-    <div style={styles.container}>
-
-      <div style={styles.sidebar}>
-
-        <h2 style={styles.logo}>Admin Panel</h2>
-
-        <ul style={styles.menu}>
-
-          {[
-            { key: "dashboard", label: "Dashboard" },
-            { key: "leaveHistory", label: "Leave History" },
-            { key: "departments", label: "Departments" },
-            { key: "leaveBalance", label: "Leave Balance" },
-            { key: "calendarView", label: "Calendar View" },
-            { key: "emailNotifications", label: "Email Notifications" },
-          ].map((item) => (
-
-            <li
-              key={item.key}
-              onClick={() => setActiveSection(item.key)}
-              style={{
-                ...styles.menuItem,
-                backgroundColor:
-                  activeSection === item.key ? "#2563eb" : "transparent",
-              }}
-            >
-              {item.label}
-            </li>
-
+          {navGroups.map((group) => (
+            <React.Fragment key={group.title}>
+              <span className="admin-nav-label" style={{marginTop: '15px'}}>{group.title}</span>
+              {group.items.map(({ key, label, icon }) => (
+                <button
+                  key={key}
+                  className={`admin-nav-item${activeSection === key ? " active" : ""}`}
+                  onClick={() => setActiveSection(key)}
+                  style={{marginBottom: '2px'}}
+                >
+                  <span className="admin-nav-icon">{icon}</span>
+                  <span style={{fontSize: '13px'}}>{label}</span>
+                </button>
+              ))}
+            </React.Fragment>
           ))}
+        </div>
 
-        </ul>
+        <div className="admin-sidebar-bottom">
+          <button className="admin-logout-btn" onClick={handleLogout}>
+            <span>🚪</span>
+            <span>Logout Account</span>
+          </button>
+        </div>
+      </aside>
 
-        <button style={styles.logout} onClick={handleLogout}>
-          Logout
-        </button>
-
-      </div>
-
-      <div style={styles.content}>
-
-        <h1>Admin Dashboard</h1>
-
+      <main className="admin-main">
         {renderContent()}
-
-      </div>
-
+      </main>
     </div>
   );
 }
-
-const styles = {
-
-  container: {
-    display: "flex",
-    height: "100vh",
-    fontFamily: "Segoe UI",
-    backgroundColor: "#f4f6f9",
-  },
-
-  sidebar: {
-    width: "260px",
-    backgroundColor: "#1f2937",
-    color: "white",
-    display: "flex",
-    flexDirection: "column",
-    padding: "25px 15px",
-  },
-
-  logo: {
-    marginBottom: "30px",
-    textAlign: "center",
-  },
-
-  menu: {
-    listStyle: "none",
-    padding: 0,
-    flex: 1,
-  },
-
-  menuItem: {
-    padding: "12px",
-    marginBottom: "8px",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
-
-  logout: {
-    backgroundColor: "#ef4444",
-    border: "none",
-    padding: "10px",
-    borderRadius: "6px",
-    color: "white",
-    cursor: "pointer",
-  },
-
-  content: {
-    flex: 1,
-    padding: "40px",
-  },
-
-  cardContainer: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-    gap: "20px",
-    marginTop: "20px",
-  },
-
-  card: {
-    backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "8px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-  }
-
-};
 
 export default AdminDashboard;

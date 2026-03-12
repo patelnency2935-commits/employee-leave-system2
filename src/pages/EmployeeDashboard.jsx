@@ -7,54 +7,86 @@ import EmployeeDirectory from "./EmployeeDirectory";
 import LeaveTypes from "./LeaveTypes";
 import Holidays from "./Holidays";
 import Profile from "./Profile";
+import "./EmployeeDashboard.css";
+
+const navItems = [
+  { key: "dashboard",    label: "Dashboard",         icon: "📊" },
+  { key: "applyLeave",   label: "Apply Leave",        icon: "✍️"  },
+  { key: "history",      label: "My Leave History",   icon: "📋" },
+  { key: "approveReject",label: "Approve / Reject",   icon: "✅" },
+  { key: "directory",    label: "Employee Directory", icon: "👥" },
+  { key: "leaveTypes",   label: "Leave Types",        icon: "🗂️"  },
+  { key: "holidays",     label: "Holidays",           icon: "🏖️"  },
+];
+
+function StatusBadge({ status }) {
+  const map = {
+    Approved: "badge badge-green",
+    Pending:  "badge badge-yellow",
+    Rejected: "badge badge-red",
+  };
+  return <span className={map[status] || "badge badge-blue"}>{status}</span>;
+}
 
 export default function EmployeeDashboard() {
   const [activePage, setActivePage] = useState("dashboard");
-
-  const [pending, setPending] = useState(0);
-  const [approved, setApproved] = useState(0);
-  const [rejected, setRejected] = useState(0);
+  const [pending, setPending]       = useState(0);
+  const [approved, setApproved]     = useState(0);
+  const [rejected, setRejected]     = useState(0);
   const [totalLeaves, setTotalLeaves] = useState(0);
   const [recentLeaves, setRecentLeaves] = useState([]);
 
   const formatDate = (date) => {
-    if (!date) return "-";
+    if (!date) return "—";
     return new Date(date).toLocaleDateString("en-GB");
   };
 
-  // ===============================
-  // FETCH DASHBOARD DATA
-  // ===============================
   const fetchDashboardData = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const employeeId = user?._id;
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return;
+      
+      let user = JSON.parse(storedUser);
+      let employeeId = user._id;
+      
+      // Auto-fix stale Date.now() fake IDs
+      if (employeeId && !/^[a-f\d]{24}$/i.test(employeeId)) {
+        try {
+          const emailToUse = user.email || `employee_${Date.now()}@company.com`;
+          const nameToUse  = user.name || "Employee";
+          const res = await fetch("http://localhost:5000/api/employees/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: emailToUse, name: nameToUse }),
+          });
+          const data = await res.json();
+          if (res.ok && data.employee) {
+            user = data.employee;
+            employeeId = user._id;
+            localStorage.setItem("user", JSON.stringify(user));
+          }
+        } catch (e) {
+          console.error("Auto-fix ID error:", e);
+        }
+      }
 
-      if (!employeeId) return;
+      const statsRes = await fetch(`http://localhost:5000/api/leaves/employee-stats/${employeeId}`);
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setPending(statsData.pendingLeaves || 0);
+        setApproved(statsData.approvedLeaves || 0);
+        setRejected(statsData.rejectedLeaves || 0);
+        setTotalLeaves(statsData.totalLeaves || 0);
+      }
 
-      // ✅ Fetch employee stats
-      const statsRes = await fetch(
-        `http://localhost:5000/api/leaves/employee-stats/${employeeId}`
-      );
-      const statsData = await statsRes.json();
-
-      setPending(statsData.pendingLeaves || 0);
-      setApproved(statsData.approvedLeaves || 0);
-      setRejected(statsData.rejectedLeaves || 0);
-      setTotalLeaves(statsData.totalLeaves || 0);
-
-      // ✅ Fetch only employee leaves directly
-      const leavesRes = await fetch(
-        `http://localhost:5000/api/leaves/employee/${employeeId}`
-      );
-      const leavesData = await leavesRes.json();
-
-      const lastThree = [...leavesData]
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 3);
-
-      setRecentLeaves(lastThree);
-
+      const leavesRes = await fetch(`http://localhost:5000/api/leaves/employee/${employeeId}`);
+      if (leavesRes.ok) {
+        const leavesData = await leavesRes.json();
+        const lastThree = [...leavesData]
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 3);
+        setRecentLeaves(lastThree);
+      }
     } catch (err) {
       console.error("Dashboard Error:", err);
     }
@@ -62,116 +94,129 @@ export default function EmployeeDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 30000); // Poll every 30s
+    return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => { if (activePage === "dashboard") fetchDashboardData(); }, [activePage]);
+
+  // Auto-refresh whenever a leave is applied or modified from any sub-page or admin
   useEffect(() => {
-    if (activePage === "dashboard") {
+    const handler = () => {
       fetchDashboardData();
-    }
-  }, [activePage]);
+      setActivePage("dashboard");
+    };
+    const updateHandler = () => fetchDashboardData();
+    
+    window.addEventListener("leaveUpdated", handler);
+    window.addEventListener("adminLeaveUpdated", updateHandler);
+    
+    return () => {
+      window.removeEventListener("leaveUpdated", handler);
+      window.removeEventListener("adminLeaveUpdated", updateHandler);
+    };
+  }, []);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.sidebar}>
-        <div>
-          <h2 style={styles.logo}>Leave System</h2>
+    <div className="emp-container">
+      {/* ===== SIDEBAR ===== */}
+      <aside className="emp-sidebar">
+        <div className="emp-sidebar-top">
+          <div className="emp-logo">
+            <div className="emp-logo-icon">📋</div>
+            <span className="emp-logo-text">LeaveSync</span>
+          </div>
 
-          {[
-            ["dashboard", "Dashboard"],
-            ["applyLeave", "Apply Leave"],
-            ["history", "My Leave History"],
-            ["approveReject", "Approve / Reject"],
-            ["directory", "Employee Directory"],
-            ["leaveTypes", "Leave Types"],
-            ["holidays", "Holidays"],
-          ].map(([key, label]) => (
+          <span className="admin-nav-label">Main Menu</span>
+          {navItems.map(({ key, label, icon }) => (
             <div
               key={key}
-              style={{
-                ...styles.link,
-                ...(activePage === key && styles.activeLink),
-              }}
+              className={`emp-nav-item${activePage === key ? " active" : ""}`}
               onClick={() => setActivePage(key)}
             >
+              <span className="emp-nav-icon">{icon}</span>
               {label}
             </div>
           ))}
         </div>
 
-        <div
-          style={{
-            ...styles.profileLink,
-            ...(activePage === "profile" && styles.activeLink),
-          }}
-          onClick={() => setActivePage("profile")}
-        >
-          👤 Profile
+        <div className="emp-sidebar-bottom">
+          <div
+            className={`emp-profile-btn${activePage === "profile" ? " active" : ""}`}
+            onClick={() => setActivePage("profile")}
+          >
+            <span className="emp-nav-icon">👤</span>
+            Profile
+          </div>
         </div>
-      </div>
+      </aside>
 
-      <div style={styles.main}>
+      {/* ===== MAIN ===== */}
+      <main className="emp-main">
         {activePage === "dashboard" && (
           <>
-            <div style={styles.header}>
-              <h1 style={styles.heading}>Dashboard Overview</h1>
-              <button
-                style={styles.button}
-                onClick={() => setActivePage("applyLeave")}
-              >
-                Request Leave
+            <div className="emp-topbar">
+              <div>
+                <h1 className="emp-page-title">Dashboard Overview</h1>
+                <p className="emp-page-subtitle">Welcome back! Here's your leave summary.</p>
+              </div>
+              <button className="emp-request-btn" onClick={() => setActivePage("applyLeave")}>
+                ✍️ Request Leave
               </button>
             </div>
 
-            <div style={styles.cards}>
-              <div style={styles.card}>
-                <h4>Total Leaves</h4>
-                <p>{totalLeaves}</p>
+            {/* Stat Cards */}
+            <div className="emp-cards">
+              <div className="emp-card blue">
+                <div className="emp-card-icon">📁</div>
+                <div className="emp-card-value">{totalLeaves}</div>
+                <div className="emp-card-label">Total Leaves</div>
               </div>
-
-              <div style={styles.card}>
-                <h4>Approved Leaves</h4>
-                <p>{approved}</p>
+              <div className="emp-card green">
+                <div className="emp-card-icon">✅</div>
+                <div className="emp-card-value">{approved}</div>
+                <div className="emp-card-label">Approved</div>
               </div>
-
-              <div style={styles.card}>
-                <h4>Pending Requests</h4>
-                <p>{pending}</p>
+              <div className="emp-card yellow">
+                <div className="emp-card-icon">⏳</div>
+                <div className="emp-card-value">{pending}</div>
+                <div className="emp-card-label">Pending</div>
               </div>
-
-              <div style={styles.card}>
-                <h4>Rejected Requests</h4>
-                <p>{rejected}</p>
+              <div className="emp-card red">
+                <div className="emp-card-icon">❌</div>
+                <div className="emp-card-value">{rejected}</div>
+                <div className="emp-card-label">Rejected</div>
               </div>
             </div>
 
-            <div style={styles.tableSection}>
-              <h2 style={styles.subHeading}>Recent Leave Status</h2>
+            {/* Recent Leaves Table */}
+            <div className="emp-table-section">
+              <div className="emp-section-header">
+                <span className="emp-section-title">Recent Leave Requests</span>
+              </div>
 
               {recentLeaves.length === 0 ? (
-                <p style={{ marginTop: "20px" }}>
-                  No recent leave requests
-                </p>
+                <div className="emp-empty">
+                  <div className="emp-empty-icon">📭</div>
+                  No recent leave requests found
+                </div>
               ) : (
-                <table style={styles.table}>
+                <table className="emp-table">
                   <thead>
                     <tr>
-                      <th style={styles.th}>Date</th>
-                      <th style={styles.th}>Type</th>
-                      <th style={styles.th}>Status</th>
-                      <th style={styles.th}>Manager Comment</th>
+                      <th>Date Applied</th>
+                      <th>Leave Type</th>
+                      <th>Status</th>
+                      <th>Manager Comment</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentLeaves.map((leave) => (
                       <tr key={leave._id}>
-                        <td style={styles.td}>
-                          {formatDate(leave.createdAt)}
-                        </td>
-                        <td style={styles.td}>{leave.type}</td>
-                        <td style={styles.td}>{leave.status}</td>
-                        <td style={styles.td}>
-                          {leave.managerComment || "—"}
-                        </td>
+                        <td>{formatDate(leave.createdAt)}</td>
+                        <td>{leave.type}</td>
+                        <td><StatusBadge status={leave.status} /></td>
+                        <td>{leave.managerComment || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -181,110 +226,14 @@ export default function EmployeeDashboard() {
           </>
         )}
 
-        {activePage === "applyLeave" && <ApplyLeave />}
-        {activePage === "history" && <MyLeaveHistory />}
+        {activePage === "applyLeave"    && <ApplyLeave />}
+        {activePage === "history"       && <MyLeaveHistory />}
         {activePage === "approveReject" && <ApproveReject />}
-        {activePage === "directory" && <EmployeeDirectory />}
-        {activePage === "leaveTypes" && <LeaveTypes />}
-        {activePage === "holidays" && <Holidays />}
-        {activePage === "profile" && <Profile />}
-      </div>
+        {activePage === "directory"     && <EmployeeDirectory />}
+        {activePage === "leaveTypes"    && <LeaveTypes />}
+        {activePage === "holidays"      && <Holidays />}
+        {activePage === "profile"       && <Profile />}
+      </main>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: "flex",
-    minHeight: "100vh",
-    fontFamily: "Inter, sans-serif",
-    background: "#f3f6fb",
-  },
-  sidebar: {
-    width: "260px",
-    background: "linear-gradient(180deg,#1e293b,#0f172a)",
-    color: "white",
-    padding: "30px 20px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-  },
-  logo: {
-    marginBottom: "40px",
-    fontSize: "22px",
-    fontWeight: "600",
-  },
-  link: {
-    padding: "12px 16px",
-    borderRadius: "8px",
-    marginBottom: "12px",
-    cursor: "pointer",
-  },
-  profileLink: {
-    padding: "14px 16px",
-    borderRadius: "10px",
-    cursor: "pointer",
-    background: "rgba(255,255,255,0.05)",
-  },
-  activeLink: {
-    background: "#2563eb",
-  },
-  main: {
-    flex: 1,
-    padding: "40px",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  heading: {
-    fontSize: "28px",
-    fontWeight: "600",
-  },
-  button: {
-    padding: "10px 20px",
-    background: "#2563eb",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-  },
-  cards: {
-    display: "flex",
-    gap: "20px",
-    marginTop: "30px",
-    flexWrap: "wrap",
-  },
-  card: {
-    background: "white",
-    padding: "25px",
-    borderRadius: "14px",
-    width: "220px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
-  },
-  tableSection: {
-    marginTop: "50px",
-    background: "white",
-    padding: "30px",
-    borderRadius: "14px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
-  },
-  subHeading: {
-    fontSize: "20px",
-    marginBottom: "20px",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-  th: {
-    textAlign: "left",
-    padding: "12px",
-    borderBottom: "2px solid #e2e8f0",
-  },
-  td: {
-    padding: "12px",
-    borderBottom: "1px solid #e2e8f0",
-  },
-};

@@ -1,154 +1,174 @@
 import { useState } from "react";
 import "./ApplyLeave.css";
 
+// MongoDB ObjectId is exactly 24 hex characters
+const isValidObjectId = (id) => /^[a-f\d]{24}$/i.test(id);
+
+// If user has a stale fake ID (e.g. from Date.now()), quietly fetch the real one from DB
+async function getValidUser() {
+  const userData = localStorage.getItem("user");
+  if (!userData) return null;
+
+  let user = JSON.parse(userData);
+
+  if (!isValidObjectId(user._id)) {
+    try {
+      const emailToUse = user.email || `employee_${Date.now()}@company.com`;
+      const nameToUse  = user.name || "Employee";
+
+      const res = await fetch("http://localhost:5000/api/employees/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailToUse, name: nameToUse }),
+      });
+      const data = await res.json();
+      if (res.ok && data.employee) {
+        user = data.employee;
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+    } catch (e) {
+      console.error("Re-register error:", e);
+    }
+  }
+
+  return user;
+}
+
 export default function ApplyLeave() {
   const [leaveType, setLeaveType] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [reason, setReason] = useState("");
-  const [documentPreview, setDocumentPreview] = useState("");
+  const [from, setFrom]           = useState("");
+  const [to, setTo]               = useState("");
+  const [reason, setReason]       = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg]     = useState("");
 
-  const applyLeave = async () => {
+  const applyLeave = async (e) => {
+    e.preventDefault();
+    setSuccessMsg("");
+    setErrorMsg("");
+
     if (!leaveType || !from || !to || !reason) {
-      alert("Please fill all fields");
+      setErrorMsg("Please fill in all fields.");
       return;
     }
 
-    const startDate = new Date(from);
-    const endDate = new Date(to);
-    const today = new Date();
-
-    if (endDate < startDate) {
-      alert("End date cannot be before start date.");
-      return;
-    }
-
-    const diffTime = endDate - startDate;
-    const totalDays = diffTime / (1000 * 60 * 60 * 24) + 1;
+    const startDate  = new Date(from);
+    const endDate    = new Date(to);
+    const today      = new Date();
+    const totalDays  = (endDate - startDate) / (1000 * 60 * 60 * 24) + 1;
     const noticeDays = (startDate - today) / (1000 * 60 * 60 * 24);
 
-    if (leaveType === "Casual Leave" && noticeDays < 2) {
-      alert("Casual Leave requires minimum 2 days advance notice.");
+    if (endDate < startDate) {
+      setErrorMsg("End date cannot be before start date.");
+      return;
+    }
+    if (leaveType === "Casual" && noticeDays < 2) {
+      setErrorMsg("Casual Leave requires at least 2 days' notice.");
+      return;
+    }
+    if (leaveType === "Maternity" && totalDays > 90) {
+      setErrorMsg("Maternity leave cannot exceed 90 days.");
       return;
     }
 
-    if (leaveType === "Maternity Leave" && totalDays > 90) {
-      alert("Maternity Leave cannot exceed 90 days.");
-      return;
-    }
+    setLoading(true);
 
-    if (leaveType === "Sick Leave" && totalDays > 2 && !documentPreview) {
-      alert("Medical certificate required for Sick Leave more than 2 days.");
+    // Auto-fix stale/fake IDs before submitting leave
+    const user = await getValidUser();
+
+    if (!user || !user._id || !isValidObjectId(user._id)) {
+      setErrorMsg("Could not verify your account. Please logout and login again.");
+      setLoading(false);
       return;
     }
 
     try {
-      // ✅ GET LOGGED IN USER
-      const user = JSON.parse(localStorage.getItem("user"));
-      const employeeName = user?.name;
-
-      await fetch("http://localhost:5000/api/leaves", {
+      const response = await fetch("http://localhost:5000/api/leaves", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          employee: employeeName,   // ✅ IMPORTANT FIX
+          employee: user._id,
           type: leaveType,
-          from,
-          to,
-          reason,
-          totalDays,
-          status: "Pending",
-          medicalDocument: documentPreview || null,
+          startDate: from,
+          endDate: to,
+          reason: reason,
         }),
       });
 
-      alert("Leave applied successfully!");
+      const data = await response.json();
 
+      if (!response.ok) {
+        setErrorMsg(data.message || "Failed to apply leave.");
+        setLoading(false);
+        return;
+      }
+
+      setSuccessMsg("✅ Leave applied successfully! Redirecting to dashboard…");
       setLeaveType("");
       setFrom("");
       setTo("");
       setReason("");
-      setDocumentPreview("");
+
+      setTimeout(() => {
+        window.dispatchEvent(new Event("leaveUpdated"));
+        setSuccessMsg("");
+      }, 1800);
+
     } catch (error) {
-      console.error("Error applying leave:", error);
-      alert("Error applying leave");
+      console.error("Error:", error);
+      setErrorMsg("Server error. Please make sure backend is running.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="apply-container">
-      <h2>Apply Leave</h2>
+      <h2>Apply for Leave</h2>
+      <p className="apply-subtitle">Fill in the details below to submit your leave request.</p>
 
-      <div className="form-group">
-        <label>Leave Type</label>
-        <select
-          value={leaveType}
-          onChange={(e) => setLeaveType(e.target.value)}
-        >
-          <option value="">Select Leave Type</option>
-          <option value="Casual Leave">Casual Leave</option>
-          <option value="Sick Leave">Sick Leave</option>
-          <option value="Paid Leave">Paid Leave</option>
-          <option value="Unpaid Leave">Unpaid Leave</option>
-          <option value="Maternity Leave">Maternity Leave</option>
-        </select>
-      </div>
+      {successMsg && <div className="apply-alert apply-alert-success">{successMsg}</div>}
+      {errorMsg   && <div className="apply-alert apply-alert-error">{errorMsg}</div>}
 
-      <div className="form-group">
-        <label>From Date</label>
-        <input
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-        />
-      </div>
-
-      <div className="form-group">
-        <label>To Date</label>
-        <input
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Reason</label>
-        <textarea
-          rows="3"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Enter reason for leave"
-        />
-      </div>
-
-      {leaveType === "Sick Leave" && (
+      <form onSubmit={applyLeave}>
         <div className="form-group">
-          <label>
-            Upload Medical Certificate (Required if &gt; 2 days)
-          </label>
-          <input
-            type="file"
-            accept="image/*,.pdf"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (!file) return;
+          <label>Leave Type</label>
+          <select value={leaveType} onChange={(e) => setLeaveType(e.target.value)} required>
+            <option value="">Select Leave Type</option>
+            <option value="Casual">Casual Leave</option>
+            <option value="Sick">Sick Leave</option>
+            <option value="Paid">Paid Leave</option>
+            <option value="Unpaid">Unpaid Leave</option>
+            <option value="Maternity">Maternity Leave</option>
+          </select>
+        </div>
 
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                setDocumentPreview(reader.result);
-              };
-              reader.readAsDataURL(file);
-            }}
+        <div className="form-group">
+          <label>From Date</label>
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} required />
+        </div>
+
+        <div className="form-group">
+          <label>To Date</label>
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} required />
+        </div>
+
+        <div className="form-group">
+          <label>Reason</label>
+          <textarea
+            rows="3"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Briefly describe the reason for your leave request…"
+            required
           />
         </div>
-      )}
 
-      <button className="submit-btn" onClick={applyLeave}>
-        Submit Leave
-      </button>
+        <button type="submit" className="submit-btn" disabled={loading}>
+          {loading ? "Submitting…" : "Submit Leave Request"}
+        </button>
+      </form>
     </div>
   );
 }

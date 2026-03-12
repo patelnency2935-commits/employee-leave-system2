@@ -1,101 +1,97 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import "./AdminLogin.css";
 
 export default function EmployeeLogin() {
   const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (email && password) {
+    if (!email || !password) {
+      alert("Enter email and password");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Upsert employee in DB — gets back a real MongoDB _id
+      const res = await fetch("http://localhost:5000/api/employees/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          name: email.split("@")[0],
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      // Store real employee (with real MongoDB _id)
+      localStorage.setItem("user", JSON.stringify(data.employee));
       localStorage.setItem("role", "employee");
 
-      // ✅ ADD THIS (User Data Save)
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          name: email.split("@")[0], // temporary name from email
-          email: email,
-          role: "Employee",
-        })
-      );
-
       navigate("/employee-dashboard");
-    } else {
-      alert("Enter email and password");
+
+    } catch (err) {
+      console.error(err);
+      alert("Could not connect to server. Make sure backend is running.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Employee Login</h2>
+    <div className="admin-login-wrapper">
+      <div className="admin-login-card">
+        <span className="admin-login-badge">👤 Employee Portal</span>
+        <h2>Employee Login</h2>
+        <p>Sign in to access your leave dashboard</p>
 
-        <form onSubmit={handleLogin} style={{ width: "100%" }}>
-          <input
-            type="email"
-            placeholder="Enter Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-          />
+        <form onSubmit={handleLogin}>
+          <div className="admin-field">
+            <label htmlFor="emp-email">Email address</label>
+            <input
+              id="emp-email"
+              type="email"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
 
-          <input
-            type="password"
-            placeholder="Enter Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-          />
+          <div className="admin-field">
+            <label htmlFor="emp-password">Password</label>
+            <input
+              id="emp-password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
 
-          <button type="submit" style={styles.button}>
-            Login
+          <button type="submit" className="admin-login-btn" disabled={loading}>
+            {loading ? "Signing in…" : "Sign In →"}
           </button>
         </form>
+
+        <Link to="/" className="back-link">← Back to home</Link>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(135deg, rgb(147, 197, 253))",
-  },
-  card: {
-    background: "white",
-    padding: "40px",
-    borderRadius: "12px",
-    width: "350px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-    textAlign: "center",
-  },
-  title: {
-    marginBottom: "25px",
-    color: "#1e293b",
-  },
-  input: {
-    width: "100%",
-    padding: "12px",
-    marginBottom: "15px",
-    borderRadius: "8px",
-    border: "1px solid #cbd5e1",
-    outline: "none",
-  },
-  button: {
-    width: "100%",
-    padding: "12px",
-    backgroundColor: "#2563eb",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    fontWeight: "bold",
-    cursor: "pointer",
-  },
-};

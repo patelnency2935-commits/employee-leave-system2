@@ -26,8 +26,7 @@ export default function Holidays() {
       filterMonth === "All" ||
       new Date(h.date).getMonth() + 1 === Number(filterMonth);
 
-    const typeMatch =
-      filterType === "All" || h.type === filterType;
+    const typeMatch = filterType === "All" || h.type === filterType;
 
     return monthMatch && typeMatch;
   });
@@ -90,9 +89,7 @@ export default function Holidays() {
       {/* Holiday List */}
       <div style={styles.card}>
         <h3 style={styles.cardTitle}>
-          {viewMode === "monthly"
-            ? "📆 Monthly View"
-            : "📅 Yearly View"}
+          {viewMode === "monthly" ? "📆 Monthly View" : "📅 Yearly View"}
         </h3>
 
         {filtered.length === 0 && (
@@ -102,10 +99,10 @@ export default function Holidays() {
         {filtered.map((holiday) => (
           <div key={holiday.id} style={styles.row}>
             <div>
-              <strong style={styles.holidayName}>
-                {holiday.name}
-              </strong>
+              <strong style={styles.holidayName}>{holiday.name}</strong>
+
               <p style={styles.dateText}>{holiday.date}</p>
+
               <small style={styles.meta}>
                 {holiday.type} | {holiday.region}
               </small>
@@ -126,13 +123,13 @@ export default function Holidays() {
 
 const styles = {
   wrapper: {
-    padding: "40px 60px",
-    background: "linear-gradient(to right, #f8fafc, #eef2f7)",
+    padding: "40px",
+    background: "#f5f7fb",
     minHeight: "100vh",
   },
 
   heading: {
-    fontSize: "28px",
+    fontSize: "26px",
     fontWeight: "600",
     marginBottom: "25px",
     color: "#1e293b",
@@ -140,91 +137,96 @@ const styles = {
 
   card: {
     background: "#ffffff",
-    padding: "30px 35px",
-    marginTop: "25px",
-    borderRadius: "18px",
-    display: "grid",
-    gap: "15px",
-    boxShadow: "0 15px 40px rgba(0,0,0,0.05)",
-    border: "1px solid #f1f5f9",
+    padding: "28px",
+    marginTop: "20px",
+    borderRadius: "14px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
   },
 
   cardTitle: {
-    fontSize: "18px",
+    fontSize: "17px",
     fontWeight: "600",
     color: "#0f172a",
+    marginBottom: "8px",
   },
 
   input: {
-    padding: "12px 14px",
-    borderRadius: "10px",
-    border: "1px solid #e2e8f0",
+    padding: "10px 12px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
     fontSize: "14px",
     outline: "none",
-    transition: "0.2s",
-  },
-
-  secondaryBtn: {
-    background: "#e2e8f0",
-    color: "#1e293b",
-    padding: "10px 16px",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: "500",
-  },
-
-  activeBtn: {
-    background: "#0f172a",
-    color: "white",
-    padding: "10px 16px",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: "600",
+    background: "#fafafa",
   },
 
   buttonRow: {
     display: "flex",
     gap: "10px",
+    marginTop: "5px",
+  },
+
+  activeBtn: {
+    background: "#0f172a",
+    color: "#ffffff",
+    padding: "9px 18px",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  secondaryBtn: {
+    background: "#e5e7eb",
+    color: "#111827",
+    padding: "9px 18px",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "500",
   },
 
   row: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    padding: "16px 0",
     borderBottom: "1px solid #f1f5f9",
-    padding: "15px 0",
   },
 
   holidayName: {
-    fontSize: "15px",
-    color: "#0f172a",
+    fontSize: "16px",
+    fontWeight: "600",
+    color: "#111827",
   },
 
   dateText: {
+    fontSize: "14px",
     margin: "4px 0",
-    color: "#64748b",
+    color: "#6b7280",
   },
 
   meta: {
-    color: "#94a3b8",
+    fontSize: "12px",
+    color: "#9ca3af",
   },
 
   deleteBtn: {
-    background: "linear-gradient(135deg, #ef4444, #dc2626)",
+    background: "#ef4444",
     color: "white",
     border: "none",
-    padding: "8px 16px",
-    borderRadius: "10px",
+    padding: "8px 14px",
+    borderRadius: "8px",
     cursor: "pointer",
     fontWeight: "600",
-    boxShadow: "0 6px 15px rgba(239,68,68,0.3)",
   },
 
   empty: {
-    color: "#94a3b8",
     textAlign: "center",
-    padding: "10px 0",
+    padding: "20px",
+    color: "#9ca3af",
+    fontSize: "14px",
   },
 };
