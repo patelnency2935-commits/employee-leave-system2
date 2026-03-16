@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaUserPlus, FaEnvelope, FaBriefcase, FaBuilding, FaShieldAlt, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
+import { FiUserPlus, FiMail, FiBriefcase, FiLayers, FiShield, FiCheckCircle, FiAlertTriangle, FiInfo, FiLoader } from "react-icons/fi";
 
 export default function AddEmployee() {
   const [formData, setFormData] = useState({
@@ -42,7 +42,6 @@ export default function AddEmployee() {
       setMessage({ text: "Employee successfully registered! All leave balances have been initialized.", type: "success" });
       setFormData({ name: "", email: "", role: "", department: "" });
       
-      // Clear message after 5 seconds
       setTimeout(() => setMessage({ text: "", type: "" }), 5000);
     } catch (err) {
       setMessage({ text: err.response?.data?.message || "Failed to register employee. Check if email is unique.", type: "error" });
@@ -52,172 +51,154 @@ export default function AddEmployee() {
   };
 
   return (
-    <div className="admin-section" style={{ 
-        padding: "40px", 
-        background: "#fff", 
-        minHeight: "80vh", 
-        borderRadius: "20px", 
-        boxShadow: "0 10px 40px -10px rgba(0,0,0,0.05)",
-        border: "1px solid #e2e8f0"
-    }}>
-      <div style={{ marginBottom: "40px" }}>
-        <h2 className="admin-section-title" style={{ margin: 0, fontSize: "26px" }}>👤 Personnel Registration</h2>
-        <p style={{ margin: "5px 0 0 0", opacity: 0.6, fontSize: "14px" }}>Onboard new staff members and automatically assign leave policies.</p>
+    <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8 min-h-[70vh] animate-in fade-in duration-700">
+      <div className="mb-10">
+        <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center">
+            <FiUserPlus className="mr-3 text-primary-600" />
+            Personnel Onboarding
+        </h2>
+        <p className="text-slate-500 mt-2 font-medium">Initialize new employee accounts and automate leave threshold assignments.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "11fr 350px", gap: "35px", maxWidth: "1250px" }}>
-        {/* Left: Registration Form */}
-        <div style={{ 
-            background: "#f8fafc", 
-            padding: "40px", 
-            borderRadius: "16px", 
-            border: "1px solid #e2e8f0",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.01)"
-        }}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {/* Registration Form */}
+        <div className="lg:col-span-8 bg-slate-50/50 p-8 rounded-[32px] border border-slate-100 shadow-inner">
           {message.text && (
-            <div style={{ 
-                padding: "16px", 
-                borderRadius: "12px", 
-                marginBottom: "30px", 
-                fontSize: "14px", 
-                fontWeight: "600",
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                background: message.type === 'success' ? '#dcfce7' : '#fee2e2', 
-                color: message.type === 'success' ? '#166534' : '#991b1b',
-                border: `1px solid ${message.type === 'success' ? '#bbf7d0' : '#fecaca'}`
-            }}>
-              {message.type === "success" ? <FaCheckCircle /> : <FaExclamationTriangle />}
-              {message.text}
+            <div className={`flex items-center space-x-4 p-5 rounded-2xl border mb-8 animate-in slide-in-from-top-4 duration-300 ${
+              message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
+            }`}>
+              <div className={`p-2 rounded-xl scale-125 ${message.type === 'success' ? 'bg-emerald-100' : 'bg-rose-100'}`}>
+                {message.type === "success" ? <FiCheckCircle /> : <FiAlertTriangle />}
+              </div>
+              <span className="text-sm font-black uppercase tracking-widest">{message.text}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "25px", marginBottom: "35px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <label style={{ fontSize: "11px", fontWeight: "900", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <FaUserPlus style={{ color: "#2563eb" }} /> Full Name
-                </label>
-                <input 
-                    style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "15px", width: "100%", outline: "none", transition: "0.2s" }} 
-                    className="input-focus-effect"
-                    name="name" 
-                    placeholder="e.g. Alexander Pierce" 
-                    value={formData.name} 
-                    onChange={handleChange} 
-                    required 
-                />
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <label style={{ fontSize: "11px", fontWeight: "900", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <FaEnvelope style={{ color: "#2563eb" }} /> Work Email
-                </label>
-                <input 
-                    style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "15px", width: "100%", outline: "none", transition: "0.2s" }} 
-                    className="input-focus-effect"
-                    name="email" 
-                    type="email" 
-                    placeholder="apierce@company.com" 
-                    value={formData.email} 
-                    onChange={handleChange} 
-                    required 
-                />
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <label style={{ fontSize: "11px", fontWeight: "900", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <FaBriefcase style={{ color: "#2563eb" }} /> Job Role
-                </label>
-                <input 
-                    style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "15px", width: "100%", outline: "none", transition: "0.2s" }} 
-                    className="input-focus-effect"
-                    name="role" 
-                    placeholder="e.g. Lead UI Engineer" 
-                    value={formData.role} 
-                    onChange={handleChange} 
-                    required 
-                />
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <label style={{ fontSize: "11px", fontWeight: "900", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <FaBuilding style={{ color: "#2563eb" }} /> Department
-                </label>
-                <select 
-                    style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "15px", width: "100%", outline: "none", background: "#fff", cursor: "pointer" }} 
-                    className="input-focus-effect"
-                    name="department" 
-                    value={formData.department} 
-                    onChange={handleChange} 
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Legal Full Name</label>
+                <div className="relative group">
+                  <FiUserPlus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+                  <input 
+                    name="name"
+                    placeholder="e.g. Sebastian Vael"
+                    className="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-bold text-slate-700"
+                    value={formData.name}
+                    onChange={handleChange}
                     required
-                >
-                  <option value="">Choose Department...</option>
-                  {departments.map(d => <option key={d._id} value={d.name}>{d.name} ({d.shortName})</option>)}
-                </select>
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Institutional Email</label>
+                <div className="relative group">
+                  <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+                  <input 
+                    name="email"
+                    type="email"
+                    placeholder="name@company.com"
+                    className="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-bold text-slate-700"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Professional Job Role</label>
+                <div className="relative group">
+                  <FiBriefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+                  <input 
+                    name="role"
+                    placeholder="e.g. Senior Software Architect"
+                    className="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-bold text-slate-700"
+                    value={formData.role}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Organizational Unit</label>
+                <div className="relative group">
+                  <FiLayers className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+                  <select 
+                    name="department"
+                    className="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-bold text-slate-700 cursor-pointer appearance-none"
+                    value={formData.department}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select Unit...</option>
+                    {departments.map(d => <option key={d._id} value={d.name}>{d.name} ({d.shortName})</option>)}
+                  </select>
+                </div>
               </div>
             </div>
 
-            <button type="submit" style={{ 
-                background: "#2563eb", 
-                color: "#fff", 
-                border: "none", 
-                padding: "18px 30px", 
-                borderRadius: "14px", 
-                cursor: loading ? "not-allowed" : "pointer", 
-                fontSize: "16px", 
-                fontWeight: "800", 
-                width: "100%", 
-                opacity: loading ? 0.7 : 1, 
-                transition: "0.3s", 
-                boxShadow: "0 8px 15px rgba(37, 99, 235, 0.2)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px"
-            }} disabled={loading}>
-              {loading ? "Processing..." : <><FaUserPlus /> Finalize Registration</>}
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary-200 transition-all active:scale-[0.98] flex items-center justify-center space-x-3 group"
+            >
+              {loading ? (
+                <FiLoader className="animate-spin text-2xl" />
+              ) : (
+                <>
+                  <FiUserPlus className="text-xl group-hover:scale-110 transition-transform" />
+                  <span className="text-lg uppercase tracking-[0.2em]">Authorize Registration</span>
+                </>
+              )}
             </button>
           </form>
         </div>
 
-        {/* Right: Policy Summary */}
-        <div>
-            <div style={{ background: "#fff", padding: "30px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px rgba(0,0,0,0.01)" }}>
-                <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <FaShieldAlt style={{ color: "#2563eb" }} /> Policy Assignment
-                </h3>
-                <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "25px", lineHeight: "1.5" }}>Upon registration, the system will automatically allocate the following yearly leave quotas:</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    {activePolicies.map(p => (
-                        <div key={p._id} style={{ 
-                            display: "flex", 
-                            justifyContent: "space-between", 
-                            alignItems: "center",
-                            padding: "12px 15px", 
-                            background: "#f8fafc",
-                            borderRadius: "10px",
-                            border: "1px solid #f1f5f9"
-                        }}>
-                            <span style={{ fontSize: "13px", fontWeight: "700", color: "#334155" }}>{p.name}</span>
-                            <span style={{ fontSize: "12px", fontWeight: "800", color: "#2563eb", background: "#eff6ff", padding: "4px 10px", borderRadius: "20px" }}>{p.defaultQuota} Days</span>
-                        </div>
-                    ))}
-                    {activePolicies.length === 0 && <div style={{ fontSize: "13px", color: "#94a3b8", textAlign: "center", padding: "20px", background: "#f8fafc", borderRadius: "12px" }}>No policies defined.</div>}
-                </div>
+        {/* Policy Summary */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/50">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                <FiShield size={20} />
+              </div>
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">Policy Allocation</h3>
             </div>
             
-            <div style={{ marginTop: "25px", padding: "20px", background: "#fffbeb", borderRadius: "16px", border: "1px solid #fef3c7" }}>
-                 <p style={{ margin: 0, fontSize: "12px", color: "#92400e", lineHeight: "1.5" }}>
-                     <b>💡 Pro-tip:</b> Ensure the email address is correct. The employee will use this email to access their personalized dashboard.
-                 </p>
+            <p className="text-xs font-bold text-slate-400 leading-relaxed mb-6 uppercase tracking-wider italic">
+              * Automatic assignment of standard annual entitlement upon identity verification.
+            </p>
+
+            <div className="space-y-3">
+              {activePolicies.map(p => (
+                <div key={p._id} className="flex justify-between items-center p-4 bg-slate-50/50 rounded-2xl border border-slate-50 hover:border-primary-100 transition-colors group">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">{p.name}</span>
+                  <span className="bg-white px-3 py-1.5 rounded-xl border border-slate-100 text-primary-600 font-black text-[10px] tracking-widest shadow-sm">
+                    {p.defaultQuota} DAYS
+                  </span>
+                </div>
+              ))}
+              {activePolicies.length === 0 && (
+                <div className="text-center py-8 opacity-40">
+                  <FiInfo size={32} className="mx-auto mb-2" />
+                  <p className="text-[10px] font-black uppercase tracking-widest">No Active Policies</p>
+                </div>
+              )}
             </div>
+          </div>
+          
+          <div className="p-6 bg-amber-50/50 rounded-3xl border border-amber-100/50 flex items-start space-x-4">
+             <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
+                <FiInfo />
+             </div>
+             <p className="text-[10px] text-amber-800 font-bold leading-relaxed uppercase tracking-widest">
+                <b>Configuration Notice:</b> Credentials will be dispatched to the provided email instantly upon authorization.
+             </p>
+          </div>
         </div>
       </div>
-      <style>{`
-        .input-focus-effect:focus { border-color: #2563eb !important; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
-      `}</style>
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaBuilding, FaTag, FaEdit, FaTrash, FaSearch, FaPlus, FaSave, FaExclamationCircle, FaInbox } from "react-icons/fa";
+import { 
+  FiBriefcase, FiTag, FiEdit2, FiTrash2, FiSearch, FiPlus, FiSave, FiAlertCircle, FiInbox, FiLoader, FiTerminal 
+} from "react-icons/fi";
 
 export default function Departments() {
   const [depts, setDepts] = useState([]);
@@ -31,7 +33,6 @@ export default function Departments() {
     try {
       setLoading(true);
       const res = await axios.get("http://localhost:5000/api/departments");
-      // Simulate slight delay for skeleton test if needed, but usually real fetch is fine
       setDepts(res.data);
     } catch (err) { 
       console.error("Fetch error:", err); 
@@ -85,249 +86,150 @@ export default function Departments() {
     d.shortName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const SkeletonRow = () => (
-    <tr className="skeleton-row">
-      <td style={{ padding: "20px" }}><div className="skeleton skeleton-text" style={{ width: "60px" }}></div></td>
-      <td style={{ padding: "20px" }}><div className="skeleton skeleton-text" style={{ width: "150px" }}></div></td>
-      <td style={{ padding: "20px" }}><div className="skeleton skeleton-text" style={{ width: "40px", margin: "0 auto" }}></div></td>
-      <td style={{ padding: "20px" }}><div className="skeleton skeleton-text" style={{ width: "80px" }}></div></td>
-      <td style={{ padding: "20px" }}><div className="skeleton skeleton-text" style={{ width: "100px" }}></div></td>
-      <td style={{ padding: "20px" }}><div className="skeleton skeleton-text" style={{ width: "100px", float: "right" }}></div></td>
-    </tr>
-  );
-
   return (
-    <div className="admin-section" style={{ minHeight: "80vh", border: "1px solid #e2e8f0", borderRadius: "16px", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
+    <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8 min-h-[70vh]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 space-y-4 md:space-y-0">
         <div>
-          <h2 className="admin-section-title" style={{ margin: 0, fontSize: "22px" }}>🏢 Organization Structure</h2>
-          <p style={{ margin: "5px 0 0 0", opacity: 0.6, fontSize: "14px" }}>Manage company departments and track headcount.</p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center">
+            <FiBriefcase className="mr-3 text-primary-600" />
+            Organization Architecture
+          </h2>
+          <p className="text-slate-500 mt-1 font-medium text-sm">Define company departments and monitor workforce distribution.</p>
         </div>
-        <div style={{ position: "relative" }}>
-             <FaSearch style={{ position: "absolute", left: "15px", top: "14px", opacity: 0.4, color: "#2563eb" }} />
-             <input 
-                style={{ 
-                    padding: "12px 15px 12px 40px", 
-                    borderRadius: "12px", 
-                    border: "1px solid #e2e8f0", 
-                    width: "280px",
-                    outline: "none",
-                    fontSize: "14px",
-                    background: "#fff",
-                    boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)"
-                }} 
-                placeholder="Search departments..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-             />
+        
+        <div className="relative group">
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
+          <input
+            className="pl-11 pr-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl w-full md:w-80 text-sm focus:ring-4 focus:ring-primary-500/10 focus:bg-white focus:border-primary-500 outline-none transition-all font-mediumShadow"
+            placeholder="Search departments..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
-      
-      <form onSubmit={handleSubmit} style={{ 
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-        marginBottom: "40px", 
-        background: "#f8fafc", 
-        padding: "30px", 
-        borderRadius: "16px",
-        border: "1px solid #e2e8f0",
-        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)"
-      }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 200px", gap: "20px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "800", color: "#64748b", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
-              <FaBuilding /> Full Name
-            </label>
+
+      {/* FORM SECTION */}
+      <form onSubmit={handleSubmit} className="bg-slate-50/50 p-8 rounded-3xl border border-slate-100 mb-10 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Full Designation</label>
             <input 
-              style={{ 
-                padding: "12px 15px", 
-                borderRadius: "12px", 
-                border: duplicateError ? "1px solid #ef4444" : "1px solid #cbd5e1", 
-                outline: "none", 
-                width: "100%",
-                fontSize: "15px",
-                background: "#fff"
-              }} 
-              placeholder="e.g. Creative Design" 
+              className={`w-full px-4 py-3 bg-white border-2 rounded-2xl outline-none transition-all font-bold text-sm ${duplicateError ? 'border-rose-400 focus:ring-rose-400/10' : 'border-slate-100 focus:border-primary-500 focus:ring-primary-500/10'}`} 
+              placeholder="e.g. Creative Production" 
               value={form.name} 
               onChange={e => setForm({...form, name: e.target.value})} 
             />
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "800", color: "#64748b", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
-              <FaTag /> Short Code
-            </label>
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Short Code</label>
             <input 
-              style={{ padding: "12px 15px", borderRadius: "12px", border: "1px solid #cbd5e1", outline: "none", fontSize: "15px", background: "#fff" }} 
-              placeholder="e.g. CD" 
+              className="w-full px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-bold text-sm" 
+              placeholder="e.g. CP" 
               value={form.shortName} 
               onChange={e => setForm({...form, shortName: e.target.value})} 
             />
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "800", color: "#64748b", textTransform: "uppercase" }}>Status</label>
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Operational Status</label>
             <select 
-              style={{ padding: "12px 15px", borderRadius: "12px", border: "1px solid #cbd5e1", outline: "none", background: "white", cursor: "pointer", fontSize: "15px" }} 
+              className="w-full px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-bold text-sm cursor-pointer" 
               value={form.status} 
               onChange={e => setForm({...form, status: e.target.value})}
             >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              <option value="Active">Operational</option>
+              <option value="Inactive">Suspended</option>
             </select>
           </div>
         </div>
 
         {duplicateError && (
-          <div style={{ color: "#ef4444", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600", marginTop: "-10px" }}>
-            <FaExclamationCircle /> {duplicateError}
+          <div className="flex items-center space-x-2 text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100 animate-in fade-in slide-in-from-left-2">
+            <FiAlertCircle />
+            <span className="text-xs font-black uppercase tracking-widest">{duplicateError}</span>
           </div>
         )}
 
-        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+        <div className="flex justify-end space-x-3">
           {editing && (
-            <button type="button" onClick={cancelEdit} style={{ 
-              padding: "12px 24px", 
-              background: "#fff", 
-              color: "#64748b", 
-              border: "1px solid #cbd5e1", 
-              borderRadius: "12px", 
-              fontWeight: "700",
-              cursor: "pointer"
-            }}>Cancel</button>
+            <button type="button" onClick={cancelEdit} className="px-6 py-3 bg-white border-2 border-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
+              Discard Changes
+            </button>
           )}
-          <button type="submit" disabled={!!duplicateError} style={{ 
-            padding: "12px 30px", 
-            background: editing ? "#1e293b" : "#2563eb", 
-            color: "#fff", 
-            border: "none", 
-            borderRadius: "12px", 
-            fontWeight: "bold",
-            cursor: duplicateError ? "not-allowed" : "pointer",
-            transition: "0.2s",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            opacity: duplicateError ? 0.6 : 1,
-            boxShadow: editing ? "none" : "0 4px 12px rgba(37, 99, 235, 0.2)"
-          }}>
-            {editing ? <><FaSave /> Save Changes</> : <><FaPlus /> Add Department</>}
+          <button 
+            type="submit" 
+            disabled={!!duplicateError} 
+            className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center space-x-2 shadow-lg active:scale-95 ${editing ? 'bg-slate-900 shadow-slate-200 text-white' : 'bg-primary-600 shadow-primary-100 text-white hover:bg-primary-700'} ${duplicateError ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            {editing ? <><FiSave /> <span>Synchronize Data</span></> : <><FiPlus /> <span>Initialize Unit</span></>}
           </button>
         </div>
       </form>
 
-      <div className="admin-table-container" style={{ background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-        <table className="admin-table">
-          <thead>
-            <tr style={{ background: "#f8fafc" }}>
-              <th style={{ padding: "20px" }}>Dept Code</th>
-              <th style={{ padding: "20px" }}>Department Name</th>
-              <th style={{ padding: "20px", textAlign: "center" }}>Headcount</th>
-              <th style={{ padding: "20px" }}>Status</th>
-              <th style={{ padding: "20px" }}>Created At</th>
-              <th style={{ padding: "20px", textAlign: "right" }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-                <>
-                  <SkeletonRow />
-                  <SkeletonRow />
-                  <SkeletonRow />
-                </>
-            ) : filteredDepts.length === 0 ? (
+      {/* TABLE SECTION */}
+      <div className="border border-slate-50 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">
+                <th className="px-8 py-5">Unit Identifier</th>
+                <th className="px-8 py-5">Designation Name</th>
+                <th className="px-8 py-5 text-center">Headcount</th>
+                <th className="px-8 py-5">Status</th>
+                <th className="px-8 py-5 text-right">Administrative Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr><td colSpan="5" className="px-8 py-20 text-center"><FiLoader className="animate-spin mx-auto text-primary-600 mb-2" size={24} /><p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-[10px]">Processing Structure...</p></td></tr>
+              ) : filteredDepts.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: "center", padding: "80px 40px" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "15px" }}>
-                      <div style={{ width: "80px", height: "80px", background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "32px" }}>
-                        <FaInbox />
+                  <td colSpan="5" className="px-8 py-24 text-center">
+                    <div className="flex flex-col items-center opacity-30">
+                        <FiTerminal size={48} className="mb-4" />
+                        <p className="font-black uppercase tracking-widest text-xs">No designation matches found</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredDepts.map(d => (
+                  <tr key={d._id} className="hover:bg-slate-50 transition-colors group">
+                    <td className="px-8 py-6">
+                      <span className="bg-slate-900 border border-slate-800 text-white px-3 py-1.5 rounded-xl font-black text-xs tracking-widest group-hover:bg-primary-600 group-hover:border-primary-600 transition-all duration-300">
+                        {d.shortName}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 font-black text-slate-900 tracking-tight">{d.name}</td>
+                    <td className="px-8 py-6 text-center">
+                       <div className="flex flex-col items-center">
+                          <span className="text-xl font-black text-primary-600">{d.employeeCount || 0}</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Active Members</span>
+                       </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${d.status === "Active" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${d.status === "Active" ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                        {d.status || "Active"}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                        <button title="Edit Unit" onClick={() => editDept(d)} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white border border-blue-100 transition-all active:scale-90 shadow-sm">
+                          <FiEdit2 size={16} />
+                        </button>
+                        <button title="Dissolve Unit" onClick={() => deleteDept(d._id)} className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white border border-rose-100 transition-all active:scale-90 shadow-sm">
+                          <FiTrash2 size={16} />
+                        </button>
                       </div>
-                      <h3 style={{ margin: 0, color: "#1e293b" }}>No Departments Found</h3>
-                      <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>Start by adding one using the form above!</p>
-                    </div>
-                  </td>
-                </tr>
-            ) : (
-              filteredDepts.map(d => (
-                <tr key={d._id}>
-                  <td style={{ padding: "20px" }}>
-                    <span style={{ fontWeight: 800, color: "#1e293b", background: "#f1f5f9", padding: "8px 14px", borderRadius: "10px", fontSize: "13px" }}>{d.shortName}</span>
-                  </td>
-                  <td style={{ padding: "20px" }}>
-                    <div style={{ fontWeight: "700", color: "#1e293b" }}>{d.name}</div>
-                  </td>
-                  <td style={{ padding: "20px", textAlign: "center" }}>
-                     <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", minWidth: "80px" }}>
-                        <span style={{ fontWeight: "900", fontSize: "18px", color: "#2563eb" }}>{d.employeeCount || 0}</span>
-                        <span style={{ fontSize: "10px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase" }}>Staff Members</span>
-                     </div>
-                  </td>
-                  <td style={{ padding: "20px" }}>
-                    <span className={`badge ${d.status === "Active" ? "badge-green" : "badge-gray"}`} style={d.status !== "Active" ? { background: "#f1f5f9", color: "#64748b" } : {}}>
-                      <span style={{ fontSize: "8px", marginRight: "6px" }}>●</span>
-                      {d.status || "Active"}
-                    </span>
-                  </td>
-                  <td style={{ padding: "20px", fontSize: "13px", color: "#94a3b8" }}>
-                    {new Date(d.createdAt).toLocaleDateString()}
-                  </td>
-                  <td style={{ padding: "20px", textAlign: "right" }}>
-                    <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                        <button title="Edit" onClick={() => editDept(d)} style={{ 
-                            width: "38px",
-                            height: "38px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: "#eff6ff", 
-                            color: "#2563eb",
-                            border: "1px solid #dbeafe", 
-                            borderRadius: "10px", 
-                            cursor: "pointer",
-                            transition: "0.2s"
-                        }} className="btn-icon-hover"><FaEdit /></button>
-                        <button title="Delete" onClick={() => deleteDept(d._id)} style={{ 
-                            width: "38px",
-                            height: "38px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: "#fff1f2", 
-                            color: "#e11d48", 
-                            border: "1px solid #fee2e2", 
-                            borderRadius: "10px", 
-                            cursor: "pointer",
-                            transition: "0.2s"
-                        }} className="btn-icon-hover"><FaTrash /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <style>{`
-        .btn-icon-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .badge-gray { background: #f1f5f9 !important; color: #64748b !important; }
-        
-        @keyframes skeleton-loading {
-          0% { background-color: #f1f5f9; }
-          100% { background-color: #e2e8f0; }
-        }
-        
-        .skeleton {
-          animation: skeleton-loading 1s linear infinite alternate;
-          border-radius: 4px;
-        }
-        
-        .skeleton-text {
-          height: 12px;
-          margin-bottom: 4px;
-        }
-      `}</style>
     </div>
   );
 }

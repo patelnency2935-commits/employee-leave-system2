@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { FaSearch, FaFilter, FaCheck, FaTimes, FaTrash, FaUserCircle, FaCalendarAlt, FaInfoCircle, FaInbox, FaUserSecret } from "react-icons/fa";
+import { FiSearch, FiFilter, FiCheck, FiX, FiTrash2, FiUser, FiCalendar, FiInfo, FiInbox, FiSlash, FiDatabase, FiLayers } from "react-icons/fi";
 
 function LeaveHistory() {
   const [leaves, setLeaves] = useState([]);
@@ -25,241 +25,180 @@ function LeaveHistory() {
   };
 
   const updateStatus = async (id, status) => {
-    const confirmMsg = status === "approved" ? "Approve this leave request?" : "Reject this leave request?";
-    if (!window.confirm(confirmMsg)) return;
+    if (!window.confirm(`Are you sure you want to ${status} this request?`)) return;
 
     try {
-      const res = await axios.put(`http://localhost:5000/api/leaves/${id}`, { status });
-      console.log("Update Success:", res.data);
-      fetchLeaves();
-      window.dispatchEvent(new Event("adminLeaveUpdated"));
+       await axios.put(`http://localhost:5000/api/leaves/${id}`, { status });
+       fetchLeaves();
+       window.dispatchEvent(new Event("adminLeaveUpdated"));
     } catch (error) {
-      console.error("Update status error:", error);
-      const backendError = error.response?.data?.message || error.message || "Failed to communicate with server";
-      alert(`⚠️ ERROR: ${backendError}`);
+       console.error("Update status error:", error);
+       alert("Error updating status.");
     }
   };
 
   const deleteLeave = async (id) => {
-    if (!window.confirm("🔴 Delete this record permanently from history?")) return;
+    if (!window.confirm("🔴 Permenently delete this record from centralized history?")) return;
     try {
       await axios.delete(`http://localhost:5000/api/leaves/${id}`);
       fetchLeaves();
       window.dispatchEvent(new Event("adminLeaveUpdated"));
     } catch (error) {
-      console.error("Delete request error:", error);
-      alert("Failed to delete record.");
+      console.error("Delete error:", error);
     }
   };
 
   const filteredLeaves = leaves.filter((leave) => {
-    const employeeName = leave.employee?.name || "Deleted User";
-    const matchSearch = employeeName.toLowerCase().includes(search.toLowerCase());
+    const employeeName = leave.employee?.name || leave.employee || "Unknown User";
+    const matchSearch = String(employeeName).toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "" || leave.status?.toLowerCase() === statusFilter;
     return matchSearch && matchStatus;
   });
 
-  const getStatusColor = (status) => {
+  const getStatusStyle = (status) => {
     switch (status?.toLowerCase()) {
-      case 'approved': return '#10b981';
-      case 'rejected': return '#ef4444';
-      case 'pending': return '#f59e0b';
-      default: return '#64748b';
+      case 'approved': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      case 'rejected': return 'bg-rose-50 text-rose-600 border-rose-100';
+      case 'pending': return 'bg-amber-50 text-amber-600 border-amber-100';
+      default: return 'bg-slate-50 text-slate-400 border-slate-100';
     }
   };
 
   return (
-    <div className="admin-section" style={{ 
-        minHeight: "80vh", 
-        borderRadius: "20px", 
-        boxShadow: "0 10px 40px -10px rgba(0,0,0,0.05)",
-        background: "#fff",
-        border: "1px solid #e2e8f0"
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "35px" }}>
+    <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8 min-h-[70vh] animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 space-y-4 md:space-y-0">
         <div>
-          <h2 className="admin-section-title" style={{ margin: 0, fontSize: "24px" }}>📋 Leave Consolidation</h2>
-          <p style={{ margin: "5px 0 0 0", opacity: 0.6, fontSize: "14px" }}>Manage the flow of leave requests and maintain organizational capacity.</p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center">
+            <FiDatabase className="mr-3 text-primary-600" />
+            Leave Ledger
+          </h2>
+          <p className="text-slate-500 mt-1 font-medium text-sm">Review historical leave logs and manage legacy request statuses.</p>
         </div>
         
-        <div style={{ display: "flex", gap: "10px" }}>
-          <div style={{ position: "relative" }}>
-            <FaSearch style={{ position: "absolute", left: "14px", top: "14px", opacity: 0.3, color: "#2563eb" }} />
+        <div className="flex items-center space-x-3">
+          <div className="relative group">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
             <input
-              style={{ 
-                  padding: "12px 15px 12px 40px", 
-                  borderRadius: "12px", 
-                  border: "1px solid #e2e8f0", 
-                  width: "250px",
-                  outline: "none",
-                  fontSize: "14px",
-                  background: "#f8fafc"
-              }}
-              placeholder="Search employee..."
+              className="pl-11 pr-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl w-full md:w-64 text-sm focus:ring-4 focus:ring-primary-500/10 focus:bg-white focus:border-primary-500 outline-none transition-all font-bold text-slate-700"
+              placeholder="Filter by staff..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           
-          <select
-            style={{ 
-                padding: "12px 15px", 
-                borderRadius: "12px", 
-                border: "1px solid #e2e8f0", 
-                outline: "none",
-                fontSize: "14px",
-                background: "white",
-                cursor: "pointer"
-            }}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Statuses</option>
-            <option value="pending">⏳ Pending Only</option>
-            <option value="approved">✅ Approved</option>
-            <option value="rejected">❌ Rejected</option>
-          </select>
+          <div className="relative group">
+             <FiFilter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors pointer-events-none" />
+             <select
+                className="pl-11 pr-8 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">All Logs</option>
+                <option value="pending">⏳ Pending</option>
+                <option value="approved">✅ Approved</option>
+                <option value="rejected">❌ Rejected</option>
+             </select>
+          </div>
         </div>
       </div>
 
-      <div className="admin-table-container" style={{ border: "1px solid #f1f5f9", borderRadius: "16px" }}>
-        <table className="admin-table">
-          <thead>
-            <tr style={{ background: "#f8fafc" }}>
-              <th style={{ padding: "18px 20px" }}>Requesting Staff</th>
-              <th style={{ padding: "18px 20px" }}>Leave Category</th>
-              <th style={{ padding: "18px 20px" }}><FaCalendarAlt style={{marginRight: 6}}/> Schedule</th>
-              <th style={{ padding: "18px 20px" }}><FaInfoCircle style={{marginRight: 6}}/> Reason / Narrative</th>
-              <th style={{ padding: "18px 20px", textAlign: "center" }}>Status</th>
-              <th style={{ padding: "18px 20px", textAlign: "right" }}>Process</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-                <tr><td colSpan="6" style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>Processing request queue...</td></tr>
-            ) : filteredLeaves.length === 0 ? (
+      <div className="border border-slate-50 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">
+                <th className="px-8 py-5">Requesting Identity</th>
+                <th className="px-8 py-5">Category</th>
+                <th className="px-8 py-5">Timeline</th>
+                <th className="px-8 py-5">Context / Reason</th>
+                <th className="px-8 py-5 text-center">Status</th>
+                <th className="px-8 py-5 text-right">Process</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr><td colSpan="6" className="px-8 py-20 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Querying central records...</td></tr>
+              ) : filteredLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: "center", padding: "100px" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", opacity: 0.3 }}>
-                        <FaInbox style={{ fontSize: "40px" }} />
-                        <h3 style={{ margin: 0 }}>Queue is clear!</h3>
-                        <p style={{ fontSize: "14px" }}>No applications found matching your current filters.</p>
+                  <td colSpan="6" className="px-8 py-24 text-center">
+                    <div className="flex flex-col items-center opacity-30">
+                        <FiInbox size={48} className="mb-4" />
+                        <p className="font-black uppercase tracking-widest text-xs">Ledger is currently empty</p>
                     </div>
                   </td>
                 </tr>
-            ) : (
-              filteredLeaves.map((leave) => {
-                const start = new Date(leave.startDate);
-                const end = new Date(leave.endDate);
-                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                const status = leave.status?.toLowerCase() || 'pending';
-                const hasEmployee = !!leave.employee;
+              ) : (
+                filteredLeaves.map((leave) => {
+                   const employeeName = leave.employee?.name || leave.employee || "Historical Staff";
+                   const start = new Date(leave.startDate || leave.from);
+                   const end = new Date(leave.endDate || leave.to);
+                   const status = leave.status?.toLowerCase() || 'pending';
 
-                return (
-                  <tr key={leave._id}>
-                    <td style={{ padding: "18px 20px" }}>
-                       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div style={{ 
-                              width: 36, height: 36, borderRadius: "50%", 
-                              background: hasEmployee ? "#f1f5f9" : "#fff1f2", 
-                              display: "flex", 
-                              alignItems: "center", justifyContent: "center",
-                              fontSize: "14px", fontWeight: "800", color: hasEmployee ? "#64748b" : "#e11d48"
-                          }}>
-                             {hasEmployee ? leave.employee?.name?.charAt(0) : <FaUserSecret />}
-                          </div>
-                          <div>
-                            <div style={{fontWeight: "800", color: hasEmployee ? "#1e293b" : "#e11d48", fontSize: "14px"}}>
-                                {hasEmployee ? leave.employee?.name : "Deleted Staff Account"}
+                   return (
+                    <tr key={leave._id} className="hover:bg-slate-50 transition-colors group">
+                      <td className="px-8 py-6">
+                         <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-black text-sm group-hover:bg-primary-600 transition-all">
+                               {String(employeeName).charAt(0)}
                             </div>
-                            <div style={{fontSize: "12px", color: "#94a3b8", fontWeight: "600"}}>
-                                {hasEmployee ? (leave.employee?.department || "General") : "Historical Record"}
+                            <div>
+                              <p className="font-black text-slate-900 tracking-tight leading-none">{employeeName}</p>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                                 {leave.employee?.department || "General Personnel"}
+                              </p>
                             </div>
-                          </div>
-                       </div>
-                    </td>
-                    <td style={{ padding: "18px 20px" }}>
-                       <span style={{ 
-                           padding: "4px 10px", 
-                           borderRadius: "6px", 
-                           background: "#edf2ff", 
-                           color: "#4c6ef5", 
-                           fontSize: "11px", 
-                           fontWeight: "800",
-                           textTransform: "uppercase"
-                       }}>{leave.type}</span>
-                    </td>
-                    <td style={{ padding: "18px 20px" }}>
-                       <div style={{fontWeight: "800", fontSize: "15px", color: "#1e293b"}}>{days} <span style={{fontSize: "11px", opacity: 0.5}}>Days</span></div>
-                       <div style={{fontSize: "11px", color: "#64748b", fontWeight: "600"}}>{start.toLocaleDateString(undefined, { month: 'short', day: 'numeric'})} – {end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric'})}</div>
-                    </td>
-                    <td style={{ padding: "18px 20px" }}>
-                        <div style={{ 
-                            fontSize: "13px", 
-                            color: "#64748b", 
-                            maxWidth: "250px", 
-                            lineHeight: "1.4",
-                            fontStyle: "italic"
-                        }}>
-                           "{leave.reason}"
+                         </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <span className="bg-indigo-50 border border-indigo-100 text-indigo-600 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest">
+                           {leave.type}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6">
+                         <div className="flex flex-col">
+                            <span className="font-black text-slate-900 tracking-tight flex items-center">
+                               <FiCalendar className="mr-2 text-slate-300" size={12} />
+                               {start.toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
+                            </span>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                               until {end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric'})}
+                            </span>
+                         </div>
+                      </td>
+                      <td className="px-8 py-6 max-w-xs">
+                        <p className="text-xs font-bold text-slate-500 line-clamp-2 italic">"{leave.reason}"</p>
+                      </td>
+                      <td className="px-8 py-6 text-center">
+                        <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyle(status)}`}>
+                            {status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                           {status === 'pending' ? (
+                             <>
+                               <button onClick={() => updateStatus(leave._id, 'Approved')} className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white border border-emerald-100 transition-all active:scale-95 shadow-sm">
+                                  <FiCheck size={14} strokeWidth={3} />
+                               </button>
+                               <button onClick={() => updateStatus(leave._id, 'Rejected')} className="p-2.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white border border-rose-100 transition-all active:scale-95 shadow-sm">
+                                  <FiX size={14} strokeWidth={3} />
+                               </button>
+                             </>
+                           ) : (
+                             <button onClick={() => deleteLeave(leave._id)} className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white border border-slate-100 transition-all active:scale-95 shadow-sm">
+                                <FiTrash2 size={14} />
+                             </button>
+                           )}
                         </div>
-                    </td>
-                    <td style={{ padding: "18px 20px", textAlign: "center" }}>
-                       <span className={`badge badge-${status === "approved" ? "green" : status === "rejected" ? "red" : "yellow"}`}>
-                          <span style={{ fontSize: "8px", marginRight: "6px" }}>●</span>
-                          {status}
-                       </span>
-                    </td>
-                    <td style={{ padding: "18px 20px", textAlign: "right" }}>
-                      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                        {status === "pending" ? (
-                          <>
-                            <button 
-                                onClick={() => updateStatus(leave._id, "approved")}
-                                style={{ 
-                                    width: 34, height: 34, borderRadius: "8px", 
-                                    background: "#10b981", color: "#fff", 
-                                    border: "none", cursor: "pointer",
-                                    display: "flex", alignItems: "center", justifyContent: "center"
-                                }} className="action-btn" title="Approve Request">
-                                <FaCheck />
-                            </button>
-                            <button 
-                                onClick={() => updateStatus(leave._id, "rejected")}
-                                style={{ 
-                                    width: 34, height: 34, borderRadius: "8px", 
-                                    background: "#ef4444", color: "#fff", 
-                                    border: "none", cursor: "pointer",
-                                    display: "flex", alignItems: "center", justifyContent: "center"
-                                }} className="action-btn" title="Reject Request">
-                                <FaTimes />
-                            </button>
-                          </>
-                        ) : (
-                          <button 
-                            onClick={() => deleteLeave(leave._id)}
-                            style={{ 
-                                width: 34, height: 34, borderRadius: "8px", 
-                                background: "#f1f5f9", color: "#64748b", 
-                                border: "1px solid #e2e8f0", cursor: "pointer",
-                                display: "flex", alignItems: "center", justifyContent: "center"
-                            }} className="action-btn" title="Archive / Delete Record">
-                            <FaTrash />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                      </td>
+                    </tr>
+                   );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <style>{`
-         .action-btn { transition: 0.2s; }
-         .action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-      `}</style>
     </div>
   );
 }

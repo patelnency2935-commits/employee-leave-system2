@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { FaUserPlus, FaSearch, FaEdit, FaTrash, FaSave, FaTimes, FaInbox, FaUserTie, FaBuilding, FaEnvelope } from "react-icons/fa";
+import { 
+  FiSearch, FiEdit2, FiTrash2, FiSave, FiX, FiUser, FiHome, FiMail, FiLoader, FiTerminal, FiUsers 
+} from "react-icons/fi";
 
 function ManageEmployees() {
   const [employees, setEmployees] = useState([]);
@@ -75,194 +77,154 @@ function ManageEmployees() {
   );
 
   const getInitialsColor = (name) => {
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+    const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-violet-500', 'bg-pink-500', 'bg-cyan-500'];
     const index = (name?.charCodeAt(0) || 0) % colors.length;
     return colors[index];
   };
 
   return (
-    <div className="admin-section" style={{ 
-        minHeight: "80vh", 
-        borderRadius: "20px", 
-        boxShadow: "0 10px 40px -10px rgba(0,0,0,0.05)",
-        background: "#fff",
-        border: "1px solid #e2e8f0"
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "35px" }}>
+    <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8 min-h-[70vh]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 space-y-4 md:space-y-0 text-center md:text-left">
         <div>
-          <h2 className="admin-section-title" style={{ margin: 0, fontSize: "24px" }}>👥 Workforce Directory</h2>
-          <p style={{ margin: "5px 0 0 0", opacity: 0.6, fontSize: "14px" }}>Manage employee profiles, roles, and departmental access.</p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center justify-center md:justify-start">
+            <FiUsers className="mr-3 text-primary-600" />
+            Workforce Directory
+          </h2>
+          <p className="text-slate-500 mt-1 font-medium text-sm">Manage employee profiles and system access permissions.</p>
         </div>
         
-        <div style={{ display: "flex", gap: "15px" }}>
-          <div style={{ position: "relative" }}>
-            <FaSearch style={{ position: "absolute", left: "15px", top: "14px", opacity: 0.3, color: "#2563eb" }} />
-            <input
-              style={{ 
-                  padding: "12px 15px 12px 40px", 
-                  borderRadius: "12px", 
-                  border: "1px solid #e2e8f0", 
-                  width: "300px",
-                  outline: "none",
-                  fontSize: "14px",
-                  background: "#f8fafc",
-                  transition: "0.2s"
-              }}
-              className="search-input-hover"
-              placeholder="Search by name, email or dept..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+        <div className="relative group">
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
+          <input
+            className="pl-11 pr-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl w-full md:w-80 text-sm focus:ring-4 focus:ring-primary-500/10 focus:bg-white focus:border-primary-500 outline-none transition-all font-mediumShadow"
+            placeholder="Search by name, email or department..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </div>
 
-      <div className="admin-table-container" style={{ border: "1px solid #f1f5f9", borderRadius: "16px", overflow: "visible" }}>
-        <table className="admin-table">
-          <thead>
-            <tr style={{ background: "#f8fafc" }}>
-              <th style={{ padding: "18px 24px" }}><FaUserTie style={{ marginRight: "8px" }} /> Employee Profile</th>
-              <th style={{ padding: "18px 24px" }}><FaBuilding style={{ marginRight: "8px" }} /> Role & Placement</th>
-              <th style={{ padding: "18px 24px" }}><FaEnvelope style={{ marginRight: "8px" }} /> Contact Details</th>
-              <th style={{ padding: "18px 24px" }}>Account Status</th>
-              <th style={{ padding: "18px 24px", textAlign: "right" }}>Action Center</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-                <tr><td colSpan="5" style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>Synchronizing directory...</td></tr>
-            ) : filtered.length === 0 ? (
+      <div className="border border-slate-50 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">
+                <th className="px-8 py-5">Employee Profile</th>
+                <th className="px-8 py-5">Role & Placement</th>
+                <th className="px-8 py-5">Contact Details</th>
+                <th className="px-8 py-5 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr><td colSpan="4" className="px-8 py-20 text-center"><FiLoader className="animate-spin mx-auto text-primary-600 mb-2" size={24} /><p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Directory Syncing...</p></td></tr>
+              ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: "center", padding: "80px" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", opacity: 0.4 }}>
-                        <FaInbox style={{ fontSize: "40px" }} />
-                        <p style={{ fontWeight: "700" }}>No staff members found matching your search.</p>
+                  <td colSpan="4" className="px-8 py-24 text-center">
+                    <div className="flex flex-col items-center opacity-30">
+                        <FiTerminal size={48} className="mb-4" />
+                        <p className="font-black uppercase tracking-widest text-xs">No records found matching criteria</p>
                     </div>
                   </td>
                 </tr>
-            ) : (
-              filtered.map(emp => (
-                <tr key={emp._id} style={{ transition: "0.2s" }}>
-                  <td style={{ padding: "18px 24px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                       <div style={{ 
-                           width: 42, 
-                           height: 42, 
-                           borderRadius: "14px", 
-                           background: getInitialsColor(emp.name), 
-                           display: "flex", 
-                           alignItems: "center", 
-                           justifyContent: "center", 
-                           fontSize: "16px", 
-                           fontWeight: "900", 
-                           color: "#fff",
-                           boxShadow: `0 4px 10px ${getInitialsColor(emp.name)}40`
-                       }}>
-                          {emp.name?.charAt(0)}
-                       </div>
-                       <div>
-                          {editId === emp._id ? (
-                            <input 
-                                style={{ padding: "8px 12px", borderRadius: "8px", border: "2px solid #2563eb", outline: "none", fontSize: "14px", width: "160px" }} 
-                                value={editData.name} 
-                                onChange={e => setEditData({...editData, name: e.target.value})} 
-                            />
-                          ) : (
-                            <div style={{ fontWeight: "800", color: "#1e293b", fontSize: "15px" }}>{emp.name}</div>
-                          )}
-                          <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", marginTop: "2px" }}>UID: {emp._id.slice(-8)}</div>
-                       </div>
-                    </div>
-                  </td>
-                  
-                  <td style={{ padding: "18px 24px" }}>
-                    {editId === emp._id ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              ) : (
+                filtered.map(emp => (
+                  <tr key={emp._id} className="hover:bg-slate-50 transition-colors group">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center space-x-4">
+                         <div className={`w-12 h-12 rounded-2xl ${getInitialsColor(emp.name)} flex items-center justify-center text-white font-black text-lg shadow-lg shadow-slate-200 group-hover:scale-110 transition-transform duration-300`}>
+                            {emp.name?.charAt(0)}
+                         </div>
+                         <div>
+                            {editId === emp._id ? (
+                              <input 
+                                  className="px-3 py-2 bg-white border-2 border-primary-500 rounded-xl outline-none text-sm font-bold w-40 animate-in zoom-in-95"
+                                  value={editData.name} 
+                                  onChange={e => setEditData({...editData, name: e.target.value})} 
+                              />
+                            ) : (
+                              <div className="font-black text-slate-900 leading-tight">{emp.name}</div>
+                            )}
+                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">ID: {emp._id.slice(-6)}</div>
+                         </div>
+                      </div>
+                    </td>
+                    
+                    <td className="px-8 py-6">
+                      {editId === emp._id ? (
+                        <div className="space-y-2 max-w-[200px] animate-in slide-in-from-left-2 transition-all">
+                           <input 
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary-500 outline-none"
+                              value={editData.role} 
+                              placeholder="Job Title"
+                              onChange={e => setEditData({...editData, role: e.target.value})} 
+                           />
+                            <select 
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary-500 outline-none cursor-pointer"
+                              value={editData.department} 
+                              onChange={e => setEditData({...editData, department: e.target.value})}
+                            >
+                               {departments.map(d => <option key={d._id} value={d.name}>{d.name}</option>)}
+                            </select>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="inline-block px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider mb-1">
+                            {emp.role || "Staff Member"}
+                          </span>
+                          <div className="text-sm font-bold text-slate-400 flex items-center">
+                            <FiHome className="mr-1.5 opacity-50" size={12} />
+                            {emp.department || "General"}
+                          </div>
+                        </div>
+                      )}
+                    </td>
+
+                    <td className="px-8 py-6">
+                       {editId === emp._id ? (
                          <input 
-                            style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px" }} 
-                            value={editData.role} 
-                            placeholder="Role"
-                            onChange={e => setEditData({...editData, role: e.target.value})} 
+                            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary-500 outline-none w-full animate-in slide-in-from-left-2"
+                            value={editData.email} 
+                            onChange={e => setEditData({...editData, email: e.target.value})} 
                          />
-                          <select 
-                            style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", background: "white" }} 
-                            value={editData.department} 
-                            onChange={e => setEditData({...editData, department: e.target.value})}
-                          >
-                             {departments.map(d => <option key={d._id} value={d.name}>{d.name}</option>)}
-                          </select>
+                       ) : (
+                          <div className="text-sm font-bold text-slate-700 flex items-center">
+                            <FiMail className="mr-2 opacity-30 text-primary-600" />
+                            {emp.email}
+                          </div>
+                       )}
+                    </td>
+
+                    <td className="px-8 py-6 text-center">
+                      <div className="flex items-center justify-center space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                          {editId === emp._id ? (
+                              <>
+                                <button title="Save" onClick={saveEdit} className="p-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 shadow-lg shadow-emerald-200 transition-all active:scale-90">
+                                  <FiSave size={18} />
+                                </button>
+                                <button title="Cancel" onClick={cancelEdit} className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all active:scale-90">
+                                  <FiX size={18} />
+                                </button>
+                              </>
+                          ) : (
+                              <>
+                                <button title="Edit" onClick={() => startEdit(emp)} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white border border-blue-100 transition-all active:scale-90">
+                                  <FiEdit2 size={18} />
+                                </button>
+                                <button title="Delete" onClick={() => deleteEmployee(emp._id)} className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white border border-rose-100 transition-all active:scale-90">
+                                  <FiTrash2 size={18} />
+                                </button>
+                              </>
+                          )}
                       </div>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span style={{ 
-                            padding: "4px 10px", 
-                            borderRadius: "8px", 
-                            background: "#f1f5f9", 
-                            color: "#475569", 
-                            fontSize: "11px", 
-                            fontWeight: "800",
-                            alignSelf: "flex-start",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.02em"
-                        }}>{emp.role || "Staff"}</span>
-                        <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "600", paddingLeft: "4px" }}>{emp.department || "General"}</div>
-                      </div>
-                    )}
-                  </td>
-
-                  <td style={{ padding: "18px 24px" }}>
-                     {editId === emp._id ? (
-                       <input 
-                          style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", width: "100%" }} 
-                          value={editData.email} 
-                          onChange={e => setEditData({...editData, email: e.target.value})} 
-                       />
-                     ) : (
-                        <div style={{ color: "#334155", fontWeight: "500", fontSize: "14px" }}>{emp.email}</div>
-                     )}
-                  </td>
-
-                  <td style={{ padding: "18px 24px" }}>
-                     <span className="badge badge-green" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor" }}></div>
-                        Active
-                     </span>
-                  </td>
-
-                  <td style={{ padding: "18px 24px", textAlign: "right" }}>
-                    <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                        {editId === emp._id ? (
-                            <>
-                                <button title="Save Changes" onClick={saveEdit} style={{ 
-                                    width: 36, height: 36, borderRadius: "10px", background: "#2563eb", color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" 
-                                }} className="action-btn-hover"><FaSave /></button>
-                                <button title="Cancel Edit" onClick={cancelEdit} style={{ 
-                                    width: 36, height: 36, borderRadius: "10px", background: "#f1f5f9", color: "#64748b", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" 
-                                }} className="action-btn-hover"><FaTimes /></button>
-                            </>
-                        ) : (
-                            <>
-                                <button title="Edit Profile" onClick={() => startEdit(emp)} style={{ 
-                                    width: 36, height: 36, borderRadius: "10px", background: "#eff6ff", color: "#2563eb", border: "1px solid #dbeafe", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" 
-                                }} className="action-btn-hover"><FaEdit /></button>
-                                <button title="Delete Profile" onClick={() => deleteEmployee(emp._id)} style={{ 
-                                    width: 36, height: 36, borderRadius: "10px", background: "#fff1f2", color: "#e11d48", border: "1px solid #fee2e2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" 
-                                }} className="action-btn-hover"><FaTrash /></button>
-                            </>
-                        )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <style>{`
-        .search-input-hover:focus { border-color: #2563eb !important; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); background: #fff !important; }
-        .action-btn-hover { transition: 0.2s; }
-        .action-btn-hover:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-      `}</style>
     </div>
   );
 }

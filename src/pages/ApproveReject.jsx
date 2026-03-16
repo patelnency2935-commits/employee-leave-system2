@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { FiCheckCircle, FiXCircle, FiClock, FiMessageCircle } from 'react-icons/fi';
 
 function ApproveReject() {
   const [leaves, setLeaves] = useState([]);
@@ -27,7 +28,6 @@ function ApproveReject() {
 
   const formatDate = (date) => {
     if (!date) return "-";
-
     return new Date(date).toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
@@ -35,69 +35,80 @@ function ApproveReject() {
     });
   };
 
-  return (
-    <div style={styles.wrapper}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Leave Applications</h2>
+  const StatusBadge = ({ status }) => {
+    const styles = {
+      approved: 'bg-green-100 text-green-700 border-green-200',
+      rejected: 'bg-red-100 text-red-700 border-red-200',
+      pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    };
+    const icons = {
+      approved: <FiCheckCircle size={14} className="mr-1.5" />,
+      rejected: <FiXCircle size={14} className="mr-1.5" />,
+      pending: <FiClock size={14} className="mr-1.5" />,
+    };
+    
+    return (
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border capitalize ${styles[status?.toLowerCase()] || styles.pending}`}>
+        {icons[status?.toLowerCase()] || icons.pending}
+        {status || "Pending"}
+      </span>
+    );
+  };
 
-        <div style={styles.tableWrapper}>
-          <table style={styles.table}>
+  return (
+    <div className="p-8">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-slate-900">Leave Applications</h2>
+        <p className="text-slate-500 mt-1">Review and manage pending leave requests from the team.</p>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
             <thead>
-              <tr>
-                <th style={styles.th}>Type</th>
-                <th style={styles.th}>From</th>
-                <th style={styles.th}>To</th>
-                <th style={styles.th}>Status</th>
-                <th style={styles.th}>Manager Comment</th>
+              <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                <th className="px-6 py-4 font-semibold">Leave Type</th>
+                <th className="px-6 py-4 font-semibold">Duration</th>
+                <th className="px-6 py-4 font-semibold">Status</th>
+                <th className="px-6 py-4 font-semibold">Manager Comment</th>
               </tr>
             </thead>
-
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {!Array.isArray(leaves) || leaves.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={styles.noData}>
-                    No Leave Applications Found
+                  <td colSpan="4" className="px-6 py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center">
+                      <FiClock size={32} className="mb-2 opacity-20" />
+                      <p className="font-medium">No leave applications found</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                leaves.map((leave) => {
-                  const status = leave.status?.toLowerCase();
-
-                  return (
-                    <tr key={leave._id}>
-                      <td style={styles.typeCell}>{leave.type || "-"}</td>
-
-                      {/* ✅ FIXED HERE */}
-                      <td style={styles.td}>
-                        {formatDate(leave.startDate)}
-                      </td>
-
-                      <td style={styles.td}>
+                leaves.map((leave) => (
+                  <tr key={leave._id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-slate-900">{leave.type || "Special Leave"}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-slate-700 font-medium flex items-center">
+                        {formatDate(leave.startDate)} 
+                        <span className="mx-2 text-slate-300">→</span> 
                         {formatDate(leave.endDate)}
-                      </td>
-
-                      <td style={styles.td}>
-                        <span
-                          style={
-                            status === "approved"
-                              ? styles.approved
-                              : status === "rejected"
-                              ? styles.rejected
-                              : styles.pending
-                          }
-                        >
-                          {leave.status || "Pending"}
-                        </span>
-                      </td>
-
-                      <td style={styles.td}>
-                        {status === "rejected"
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <StatusBadge status={leave.status} />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center text-sm text-slate-500 italic">
+                        <FiMessageCircle className="mr-2 opacity-50" />
+                        {leave.status?.toLowerCase() === "rejected"
                           ? leave.managerComment || "No reason provided"
-                          : "-"}
-                      </td>
-                    </tr>
-                  );
-                })
+                          : "Not applicable"}
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -107,71 +118,5 @@ function ApproveReject() {
   );
 }
 
-const styles = {
-  wrapper: {
-    padding: "60px 80px",
-    background: "linear-gradient(to right, #f8fafc, #eef2f7)",
-    minHeight: "100vh",
-  },
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: "20px",
-    padding: "40px",
-    boxShadow: "0 25px 50px rgba(0, 0, 0, 0.08)",
-  },
-  title: {
-    fontSize: "26px",
-    fontWeight: "600",
-    marginBottom: "30px",
-    color: "#1e293b",
-  },
-  tableWrapper: { overflowX: "auto" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: {
-    textAlign: "left",
-    padding: "16px 12px",
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "#64748b",
-    borderBottom: "2px solid #e2e8f0",
-  },
-  td: {
-    padding: "16px 12px",
-    fontSize: "14px",
-    color: "#334155",
-    borderBottom: "1px solid #f1f5f9",
-  },
-  typeCell: { fontWeight: "600", color: "#0f172a" },
-  approved: {
-    backgroundColor: "#dcfce7",
-    color: "#166534",
-    padding: "6px 18px",
-    borderRadius: "50px",
-    fontSize: "12px",
-    fontWeight: "600",
-  },
-  rejected: {
-    backgroundColor: "#fee2e2",
-    color: "#991b1b",
-    padding: "6px 18px",
-    borderRadius: "50px",
-    fontSize: "12px",
-    fontWeight: "600",
-  },
-  pending: {
-    backgroundColor: "#fef3c7",
-    color: "#92400e",
-    padding: "6px 18px",
-    borderRadius: "50px",
-    fontSize: "12px",
-    fontWeight: "600",
-  },
-  noData: {
-    textAlign: "center",
-    padding: "30px",
-    color: "#64748b",
-    fontWeight: "500",
-  },
-};
-
 export default ApproveReject;
+

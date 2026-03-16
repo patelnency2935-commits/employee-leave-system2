@@ -1,232 +1,160 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { FiCalendar, FiMapPin, FiActivity, FiGlobe, FiLoader, FiAlertCircle } from 'react-icons/fi';
 
 export default function Holidays() {
   const [holidays, setHolidays] = useState([]);
-  const [viewMode, setViewMode] = useState("monthly");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filterType, setFilterType] = useState("All");
   const [filterMonth, setFilterMonth] = useState("All");
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("holidays")) || [];
-    setHolidays(stored);
+    fetchHolidays();
   }, []);
 
-  const saveData = (data) => {
-    localStorage.setItem("holidays", JSON.stringify(data));
-  };
-
-  const deleteHoliday = (id) => {
-    const updated = holidays.filter((h) => h.id !== id);
-    setHolidays(updated);
-    saveData(updated);
+  const fetchHolidays = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("http://localhost:5000/api/holidays");
+      setHolidays(res.data);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching holidays:", err);
+      setError("Unable to synchronize with temporal server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filtered = holidays.filter((h) => {
+    const holidayDate = new Date(h.date);
     const monthMatch =
       filterMonth === "All" ||
-      new Date(h.date).getMonth() + 1 === Number(filterMonth);
-
-    const typeMatch = filterType === "All" || h.type === filterType;
-
+      holidayDate.getMonth() + 1 === Number(filterMonth);
+    
+    // Note: Backend currently doesn't have 'type', defaulting to Public for UI
+    const typeMatch = filterType === "All" || "Public" === filterType;
     return monthMatch && typeMatch;
   });
 
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/50 p-10 min-h-[80vh] flex flex-col items-center justify-center space-y-4 animate-in fade-in duration-500">
+        <div className="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center text-primary-600 shadow-inner">
+          <FiLoader className="animate-spin" size={32} />
+        </div>
+        <p className="font-black uppercase tracking-[0.3em] text-[10px] text-slate-400">Synchronizing Temporal Grid...</p>
+      </div>
+    );
+  }
+
   return (
-    <div style={styles.wrapper}>
-      <h1 style={styles.heading}>📅 Holiday Management</h1>
+    <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/50 p-10 min-h-[80vh] animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 space-y-6 md:space-y-0 text-center md:text-left">
+        <div className="flex-1">
+          <div className="flex items-center space-x-3 text-primary-600 bg-primary-50 w-fit px-4 py-1.5 rounded-full mb-4 mx-auto md:mx-0">
+             <FiGlobe size={12} strokeWidth={4} />
+             <span className="text-[10px] font-black uppercase tracking-widest">Global Observed Days</span>
+          </div>
+          <h2 className="text-4xl font-black text-slate-900 tracking-tighter flex items-center justify-center md:justify-start">
+            <FiCalendar className="mr-4 text-primary-600" />
+            Temporal Calendar
+          </h2>
+          <p className="text-slate-500 mt-2 font-bold text-lg text-pretty max-w-2xl">
+            Official organizational downtime and recognized public observed events for the current cycle.
+          </p>
+        </div>
 
-      {/* Filters */}
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>Search & Filter</h3>
-
-        <select
-          style={styles.input}
-          onChange={(e) => setFilterMonth(e.target.value)}
-        >
-          <option value="All">All Months</option>
-          {[...Array(12)].map((_, i) => (
-            <option key={i} value={i + 1}>
-              Month {i + 1}
-            </option>
-          ))}
-        </select>
-
-        <select
-          style={styles.input}
-          onChange={(e) => setFilterType(e.target.value)}
-        >
-          <option value="All">All Types</option>
-          <option>Public</option>
-          <option>Optional</option>
-          <option>Regional</option>
-        </select>
-
-        <div style={styles.buttonRow}>
-          <button
-            style={
-              viewMode === "monthly"
-                ? styles.activeBtn
-                : styles.secondaryBtn
-            }
-            onClick={() => setViewMode("monthly")}
-          >
-            Monthly View
-          </button>
-
-          <button
-            style={
-              viewMode === "yearly"
-                ? styles.activeBtn
-                : styles.secondaryBtn
-            }
-            onClick={() => setViewMode("yearly")}
-          >
-            Yearly View
-          </button>
+        <div className="flex items-center space-x-4 bg-slate-50 p-3 rounded-[24px] border border-slate-100 shadow-inner">
+           <div className="flex flex-col">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Timeline</label>
+              <select
+                className="bg-white border-2 border-slate-100 rounded-xl px-4 py-2 text-xs font-black text-slate-700 outline-none focus:border-primary-500 transition-all cursor-pointer"
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+              >
+                <option value="All">Full Year</option>
+                {months.map((month, i) => (
+                  <option key={i} value={i + 1}>{month}</option>
+                ))}
+              </select>
+           </div>
+           <div className="flex flex-col">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Classification</label>
+              <select
+                className="bg-white border-2 border-slate-100 rounded-xl px-4 py-2 text-xs font-black text-slate-700 outline-none focus:border-primary-500 transition-all cursor-pointer"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="All">All Tiers</option>
+                <option>Public</option>
+                <option>Optional</option>
+                <option>Regional</option>
+              </select>
+           </div>
         </div>
       </div>
 
-      {/* Holiday List */}
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>
-          {viewMode === "monthly" ? "📆 Monthly View" : "📅 Yearly View"}
-        </h3>
-
-        {filtered.length === 0 && (
-          <p style={styles.empty}>No holidays found</p>
-        )}
-
-        {filtered.map((holiday) => (
-          <div key={holiday.id} style={styles.row}>
-            <div>
-              <strong style={styles.holidayName}>{holiday.name}</strong>
-
-              <p style={styles.dateText}>{holiday.date}</p>
-
-              <small style={styles.meta}>
-                {holiday.type} | {holiday.region}
-              </small>
+      {error ? (
+        <div className="py-40 border-2 border-dashed border-rose-100 rounded-[40px] bg-rose-50/20 flex flex-col items-center justify-center animate-in zoom-in-95 duration-500">
+           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-rose-500 shadow-sm mb-6 border border-rose-50">
+              <FiAlertCircle size={32} />
+           </div>
+           <p className="font-black uppercase tracking-widest text-[10px] text-rose-500 mb-2">{error}</p>
+           <button onClick={fetchHolidays} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary-600 transition-colors">Retry Connection</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {filtered.length === 0 ? (
+            <div className="col-span-full py-40 border-2 border-dashed border-slate-100 rounded-[40px] bg-slate-50/30 flex flex-col items-center justify-center">
+               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-slate-300 shadow-sm mb-6">
+                  <FiActivity size={32} />
+               </div>
+               <p className="font-black uppercase tracking-widest text-xs text-slate-400">No observed events detected in this range</p>
             </div>
+          ) : (
+            filtered.map((holiday) => (
+              <div key={holiday._id} className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/30 hover:shadow-2xl hover:shadow-primary-100/20 transition-all group flex items-center space-x-8">
+                 {/* Date Engine */}
+                 <div className="relative">
+                    <div className="bg-slate-900 text-white w-24 h-24 rounded-[30px] flex flex-col items-center justify-center shadow-2xl group-hover:bg-primary-600 transition-colors duration-500 relative z-10">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-60">
+                         {new Date(holiday.date).toLocaleString('default', { month: 'short' })}
+                      </span>
+                      <span className="text-3xl font-black tracking-tighter">
+                         {new Date(holiday.date).getDate()}
+                      </span>
+                    </div>
+                    <div className="absolute -right-2 -bottom-2 w-12 h-12 bg-primary-100 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                 </div>
 
-            <button
-              style={styles.deleteBtn}
-              onClick={() => deleteHoliday(holiday.id)}
-            >
-              Delete
-            </button>
-          </div>
-        ))}
-      </div>
+                 <div className="flex-1">
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2 group-hover:text-primary-600 transition-colors uppercase">
+                      {holiday.occasion || holiday.name}
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                      <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm bg-emerald-50 text-emerald-700 border-emerald-100`}>
+                        {holiday.type || "Public"} Status
+                      </span>
+                      <span className="flex items-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                        <FiMapPin className="mr-1.5 text-primary-500" />
+                        {holiday.region || "Global Domain"}
+                      </span>
+                    </div>
+                 </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-const styles = {
-  wrapper: {
-    padding: "40px",
-    background: "#f5f7fb",
-    minHeight: "100vh",
-  },
 
-  heading: {
-    fontSize: "26px",
-    fontWeight: "600",
-    marginBottom: "25px",
-    color: "#1e293b",
-  },
-
-  card: {
-    background: "#ffffff",
-    padding: "28px",
-    marginTop: "20px",
-    borderRadius: "14px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-  },
-
-  cardTitle: {
-    fontSize: "17px",
-    fontWeight: "600",
-    color: "#0f172a",
-    marginBottom: "8px",
-  },
-
-  input: {
-    padding: "10px 12px",
-    borderRadius: "8px",
-    border: "1px solid #d1d5db",
-    fontSize: "14px",
-    outline: "none",
-    background: "#fafafa",
-  },
-
-  buttonRow: {
-    display: "flex",
-    gap: "10px",
-    marginTop: "5px",
-  },
-
-  activeBtn: {
-    background: "#0f172a",
-    color: "#ffffff",
-    padding: "9px 18px",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-  },
-
-  secondaryBtn: {
-    background: "#e5e7eb",
-    color: "#111827",
-    padding: "9px 18px",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "500",
-  },
-
-  row: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "16px 0",
-    borderBottom: "1px solid #f1f5f9",
-  },
-
-  holidayName: {
-    fontSize: "16px",
-    fontWeight: "600",
-    color: "#111827",
-  },
-
-  dateText: {
-    fontSize: "14px",
-    margin: "4px 0",
-    color: "#6b7280",
-  },
-
-  meta: {
-    fontSize: "12px",
-    color: "#9ca3af",
-  },
-
-  deleteBtn: {
-    background: "#ef4444",
-    color: "white",
-    border: "none",
-    padding: "8px 14px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-  },
-
-  empty: {
-    textAlign: "center",
-    padding: "20px",
-    color: "#9ca3af",
-    fontSize: "14px",
-  },
-};
